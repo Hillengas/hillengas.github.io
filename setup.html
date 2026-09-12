@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tesla Watch – Cloud-Einrichtung</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 20px 16px 40px; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.45; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 26px 0 8px; color: #e82127; }
+  p, li { font-size: 15px; color: #d0d0d4; }
+  .card { background: #1c1c1e; border-radius: 14px; padding: 14px; margin: 10px 0; }
+  label { display: block; font-size: 13px; color: #9a9a9e; margin: 10px 0 4px; }
+  input, select { width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px; border-radius: 10px; border: 1px solid #3a3a3c; background: #2c2c2e; color: #fff; }
+  button, a.btn { display: block; width: 100%; box-sizing: border-box; text-align: center; font-size: 16px; font-weight: 600; padding: 14px; margin-top: 12px; border-radius: 12px; border: 0; background: #2c2c2e; color: #fff; text-decoration: none; cursor: pointer; }
+  button.primary, a.btn.primary { background: #e82127; }
+  button:disabled { opacity: .4; }
+  code, textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  textarea { width: 100%; box-sizing: border-box; height: 110px; border-radius: 10px; border: 1px solid #3a3a3c; background: #111; color: #ddd; padding: 10px; }
+  .muted { color: #9a9a9e; font-size: 13px; }
+  .ok { color: #34c759; }
+  .warn { color: #ffb020; }
+  .copy-row { display: flex; gap: 8px; }
+  .copy-row button { margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Tesla Watch · Cloud-Einrichtung</h1>
+<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Alles bleibt bei dir: Diese Seite speichert nichts, die Daten gehen am Ende nur an deine Uhr.</p>
+
+<div id="nowatch" class="card" hidden>
+  <p class="warn">Diese Seite wurde nicht von der Uhr geöffnet. Bitte auf der Uhr <b>Einstellungen → Cloud → Am Handy einrichten</b> antippen, dann öffnet sie sich hier automatisch mit den Daten deiner Uhr.</p>
+</div>
+
+<h2>1. Public Key deiner Uhr veröffentlichen</h2>
+<div class="card">
+  <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages.</p>
+  <label>Dein GitHub-Benutzername</label>
+  <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off">
+  <p class="muted">Deine Domain ist dann <code id="domainPreview">&lt;name&gt;.github.io</code>.</p>
+  <a id="ghNewRepo" class="btn" href="https://github.com/new" target="_blank" rel="noopener">a) Repository „&lt;name&gt;.github.io“ anlegen (öffentlich)</a>
+  <a id="ghNoJekyll" class="btn" href="#" target="_blank" rel="noopener">b) Datei „.nojekyll“ anlegen</a>
+  <a id="ghKeyFile" class="btn primary" href="#" target="_blank" rel="noopener">c) Public Key als Datei anlegen</a>
+  <p class="muted">Bei b) und c) öffnet sich GitHub mit vorausgefülltem Inhalt – nur unten auf „Commit changes“ tippen. Nach 1–2 Minuten ist der Key online.</p>
+  <label>Public Key (falls du ihn woanders hosten willst)</label>
+  <textarea id="pem" readonly></textarea>
+  <div class="copy-row"><button id="copyPem">Key kopieren</button></div>
+</div>
+
+<h2>2. Tesla-Developer-App anlegen</h2>
+<div class="card">
+  <p>Auf <a href="https://developer.tesla.com" target="_blank" rel="noopener">developer.tesla.com</a> anmelden → „Create new app“ und eintragen:</p>
+  <ul>
+    <li><b>Allowed Origin(s):</b> <code id="originPreview">https://&lt;name&gt;.github.io</code></li>
+    <li><b>Allowed Redirect URI(s):</b> <code id="redirectPreview"></code></li>
+    <li><b>Scopes:</b> vehicle_device_data, vehicle_cmds, vehicle_charging_cmds</li>
+  </ul>
+  <p class="muted">Unter „Billing“ eine Zahlungsmethode hinterlegen (Tesla schenkt 10 $ Guthaben pro Monat, das reicht privat locker). Danach Client ID und Client Secret kopieren.</p>
+  <a class="btn" href="https://developer.tesla.com" target="_blank" rel="noopener">developer.tesla.com öffnen</a>
+</div>
+
+<h2>3. Zugangsdaten an die Uhr senden</h2>
+<div class="card">
+  <label>Region</label>
+  <select id="region">
+    <option value="eu">Europa / Rest der Welt</option>
+    <option value="na">Nordamerika</option>
+    <option value="cn">China</option>
+  </select>
+  <label>Domain</label>
+  <input id="domain" placeholder="name.github.io" autocapitalize="none" autocorrect="off">
+  <label>Client ID</label>
+  <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off">
+  <label>Client Secret</label>
+  <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off">
+  <button id="send" class="primary" disabled>An die Uhr senden</button>
+  <p class="muted">Die Uhr registriert danach die Domain bei Tesla, öffnet den Link zum Koppeln des Virtual Key auf diesem Handy und meldet dich an.</p>
+</div>
+
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const redirect = q.get('redirect_uri') || '';
+  const state = q.get('state') || '';
+  const pkB64 = q.get('pk') || '';
+  const pkg = q.get('pkg') || 'de.gebhard.teslawatch';
+
+  document.getElementById('redirectPreview').textContent = 'https://wear.googleapis.com/3p_auth/' + pkg;
+  if (!redirect) document.getElementById('nowatch').hidden = false;
+
+  let pem = '';
+  try { pem = decodeURIComponent(escape(atob(pkB64.replace(/-/g, '+').replace(/_/g, '/')))); } catch (e) { pem = ''; }
+  document.getElementById('pem').value = pem || '(Kein Schlüssel übermittelt – Seite von der Uhr aus öffnen)';
+
+  const ghuser = document.getElementById('ghuser');
+  const domainInput = document.getElementById('domain');
+  function updateGh() {
+    const u = ghuser.value.trim().toLowerCase();
+    const dom = u ? u + '.github.io' : '<name>.github.io';
+    document.getElementById('domainPreview').textContent = dom;
+    document.getElementById('originPreview').textContent = 'https://' + dom;
+    document.getElementById('ghNewRepo').textContent = 'a) Repository „' + dom + '“ anlegen (öffentlich)';
+    if (u) {
+      const repo = 'https://github.com/' + u + '/' + u + '.github.io/new/main';
+      document.getElementById('ghNoJekyll').href = repo + '?filename=.nojekyll&value=' + encodeURIComponent(' ');
+      document.getElementById('ghKeyFile').href = repo + '?filename=' + encodeURIComponent('.well-known/appspecific/com.tesla.3p.public-key.pem') + '&value=' + encodeURIComponent(pem);
+      if (!domainInput.value) domainInput.value = dom;
+    }
+  }
+  ghuser.addEventListener('input', updateGh);
+  updateGh();
+
+  document.getElementById('copyPem').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(pem); document.getElementById('copyPem').textContent = 'Kopiert ✓'; } catch (e) { document.getElementById('pem').select(); }
+  });
+
+  const send = document.getElementById('send');
+  const fields = ['domain', 'clientId', 'clientSecret'].map(id => document.getElementById(id));
+  function validate() {
+    send.disabled = !redirect || fields.some(f => !f.value.trim());
+  }
+  fields.forEach(f => f.addEventListener('input', validate));
+  validate();
+
+  send.addEventListener('click', () => {
+    const data = {
+      region: document.getElementById('region').value,
+      domain: domainInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, ''),
+      clientId: document.getElementById('clientId').value.trim(),
+      clientSecret: document.getElementById('clientSecret').value.trim(),
+    };
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    location.href = redirect + '?code=' + encodeURIComponent(code) + '&state=' + encodeURIComponent(state);
+  });
+})();
+</script>
+</body>
+</html>

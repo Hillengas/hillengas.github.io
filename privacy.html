@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch for Tesla – Datenschutzerklärung</title>
+<style>
+  body { margin: 0; padding: 24px 16px 48px; max-width: 720px; margin-inline: auto; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; line-height: 1.5; color: #222; background: #fff; }
+  h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 28px; }
+  p, li { font-size: 15px; }
+  .en { color: #555; }
+</style>
+</head>
+<body>
+<h1>Datenschutzerklärung „Watch for Tesla“</h1>
+<p>Stand: September 2026 · Verantwortlich: Alexander Gebhard (Kontakt über das GitHub-Repository <a href="https://github.com/Hillengas/TeslaWatchApp">Hillengas/TeslaWatchApp</a>)</p>
+
+<h2>Kurzfassung</h2>
+<ul>
+  <li>Die App sammelt keine personenbezogenen Daten und sendet nichts an den Entwickler oder an Dritte.</li>
+  <li>Alle Einstellungen (Fahrgestellnummer, Bluetooth-Adresse, Schlüssel, Zugangsdaten) werden ausschließlich auf der Uhr gespeichert.</li>
+  <li>Es gibt keine Werbung, kein Tracking, keine Analyse-Dienste.</li>
+</ul>
+
+<h2>Bluetooth</h2>
+<p>Die App verbindet sich per Bluetooth Low Energy direkt mit deinem Fahrzeug, um Befehle zu senden und den Fahrzeugstatus zu lesen. Dafür wird ein kryptografischer Schlüssel auf der Uhr erzeugt und im Fahrzeug hinterlegt. Die Berechtigungen „Geräte in der Nähe“ und „Standort“ sind technisch nötig, damit Android Bluetooth-Geräte finden darf; die App ermittelt oder speichert keinen Standort.</p>
+
+<h2>Optionale Cloud-Verbindung</h2>
+<p>Wenn du die Cloud-Steuerung einrichtest, kommuniziert die App mit den Servern von Tesla (Fleet API) über dein eigenes Tesla-Developer-Konto. Deine Zugangsdaten und Tokens bleiben auf der Uhr. Für die Verarbeitung durch Tesla gilt die Datenschutzerklärung von Tesla. Zum Anzeigen eines Fahrzeugbilds kann die App ein Bild von Teslas öffentlichem Bild-Dienst laden; dabei werden nur Modell und Farbe übermittelt.</p>
+
+<h2>Benachrichtigungen</h2>
+<p>Die Funktion „Auto-Entriegeln“ läuft als Hintergrunddienst mit einer dauerhaften Benachrichtigung, wie von Android vorgeschrieben.</p>
+
+<h2>Deine Rechte</h2>
+<p>Da keine Daten beim Entwickler gespeichert werden, gibt es dort nichts zu löschen oder auszukünften. Alle Daten entfernst du durch Deinstallation der App; den Schlüssel der Uhr löschst du im Fahrzeug unter „Steuerung → Schlösser“.</p>
+
+<h2 class="en">English summary</h2>
+<p class="en">Watch for Tesla does not collect, store or share any personal data. Everything (VIN, keys, credentials) stays on the watch. Bluetooth and location permissions are required by Android for device discovery only. If you configure the optional cloud connection, the app talks to Tesla's servers with your own developer account; Tesla's privacy policy applies. No ads, no tracking.</p>
+</body>
+</html>
