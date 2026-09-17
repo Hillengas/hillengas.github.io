@@ -35,6 +35,7 @@
   summary { font-size: 14px; color: #d0d0d4; cursor: pointer; }
   .copyable { display: flex; align-items: center; gap: 8px; margin: 6px 0 12px; }
   .copyable code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: #111; border-radius: 8px; padding: 9px 10px; }
+  .copyable input { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; padding: 9px 10px; border-radius: 8px; }
   .copyable button { width: auto; flex: none; margin: 0; padding: 9px 12px; font-size: 13px; border-radius: 8px; }
 </style>
 </head>
@@ -73,7 +74,7 @@
 
   <details>
     <summary>Key woanders hosten (eigene Domain)</summary>
-    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Domain in Schritt 3 ein.</p>
+    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Adresse in Schritt 2 unter „Allowed Origin“ ein.</p>
     <textarea id="pem" readonly></textarea>
     <button id="copyPem">Key kopieren</button>
   </details>
@@ -83,7 +84,8 @@
 <div class="card">
   <p>Auf developer.tesla.com anmelden → „Create new app“. Diese Werte antippen zum Kopieren:</p>
   <label>Allowed Origin(s)</label>
-  <div class="copyable"><code id="originPreview"></code><button data-copy="originPreview">Kopieren</button></div>
+  <div class="copyable"><input id="origin" placeholder="https://name.github.io" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"><button data-copy="origin">Kopieren</button></div>
+  <p class="muted" style="margin-top:-6px">Vorbelegt mit deiner GitHub-Pages-Adresse. Liegt der Key woanders (z. B. eigene Domain), hier ändern – genau diese Adresse bekommt auch die Uhr.</p>
   <label>Allowed Redirect URI(s)</label>
   <div class="copyable"><code id="redirectPreview"></code><button data-copy="redirectPreview">Kopieren</button></div>
   <label>Scopes (ankreuzen)</label>
@@ -100,15 +102,12 @@
   <label>Client Secret</label>
   <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off" spellcheck="false">
   <details>
-    <summary>Region und Domain <span id="rdSummary" class="muted"></span></summary>
-    <label>Region</label>
-    <select id="region">
+    <summary>Region <span id="rdSummary" class="muted"></span></summary>
+    <select id="region" style="margin-top:8px">
       <option value="eu">Europa / Rest der Welt</option>
       <option value="na">Nordamerika</option>
       <option value="cn">China</option>
     </select>
-    <label>Domain</label>
-    <input id="domain" placeholder="name.github.io" autocapitalize="none" autocorrect="off" spellcheck="false">
   </details>
   <p id="sendWarn" class="warn" hidden>Der Key ist noch nicht online. Bitte erst Schritt 1 abschließen, sonst lehnt Tesla die Registrierung ab.</p>
   <button id="send" class="primary" disabled>An die Uhr senden</button>
@@ -138,14 +137,16 @@
     set(k, v) { try { sessionStorage.setItem('tw.' + k, v); } catch (e) {} },
   };
 
-  const ghuser = $('ghuser'), domainInput = $('domain'), region = $('region'), token = $('token');
+  const ghuser = $('ghuser'), originInput = $('origin'), region = $('region'), token = $('token');
+  // "https://Name.github.io/" -> "name.github.io"; Tesla wants the bare host.
+  const domain = () => originInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const squash = s => (s || '').replace(/\s+/g, '');
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const user = () => { const u = ghuser.value.trim().replace(/^@/, '').toLowerCase(); return /^[a-z\d](?:[a-z\d-]{0,38})$/.test(u) ? u : ''; };
 
   // ---- GitHub state detection -------------------------------------------------------------
   let st = {};            // { repo, empty, branch, nojekyll, key: 'ok' | 'other' | '', online, limited }
-  let autoDomain = '';
+  let autoOrigin = '';
   let apiCalls = 0, checking = false, checkedFor = '';
   const keyCache = {};    // blob sha -> matches this watch's key
 
@@ -174,7 +175,7 @@
     try {
       const repo = u + '.github.io';
       if (checkedFor !== u) { st = {}; checkedFor = u; }
-      if (await isOnline(repo)) { st = { repo: true, nojekyll: true, key: 'ok', online: true }; return; }
+      if (await isOnline(domain() || repo)) { st = { repo: true, nojekyll: true, key: 'ok', online: true }; return; }
       if (u !== user()) return;
       st.online = false;
       if (!useApi || (st.nojekyll && st.key === 'ok')) return;
@@ -213,10 +214,10 @@
     const u = user();
     const dom = u ? u + '.github.io' : '';
     document.querySelectorAll('.dom').forEach(e => e.textContent = dom);
-    $('originPreview').textContent = 'https://' + (domainInput.value.trim() || dom || '<name>.github.io');
-    if (dom && (!domainInput.value || domainInput.value === autoDomain)) { domainInput.value = dom; }
-    if (dom) autoDomain = dom;
-    $('rdSummary').textContent = '· ' + region.options[region.selectedIndex].text + (domainInput.value ? ' · ' + domainInput.value : '');
+    // Follow the username until the origin was edited by hand.
+    if (dom && (!originInput.value || originInput.value === autoOrigin)) originInput.value = 'https://' + dom;
+    if (dom) autoOrigin = 'https://' + dom;
+    $('rdSummary').textContent = '· ' + region.options[region.selectedIndex].text;
 
     const next = $('next'), hint = $('hint');
     $('status').hidden = next.hidden = hint.hidden = !u || !pem;
@@ -346,25 +347,37 @@
     try { await navigator.clipboard.writeText(text); btn.textContent = 'Kopiert ✓'; } catch (e) { btn.textContent = 'Bitte markieren'; }
     setTimeout(() => { btn.textContent = old; }, 1500);
   }
-  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy($(b.dataset.copy).textContent, b)));
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => { const el = $(b.dataset.copy); copy(el.value !== undefined ? el.value.trim() : el.textContent, b); }));
   $('copyPem').addEventListener('click', () => copy(pem, $('copyPem')));
 
   // ---- Send to the watch ------------------------------------------------------------------
   const send = $('send');
-  const fields = ['domain', 'clientId', 'clientSecret'].map($);
+  const fields = ['origin', 'clientId', 'clientSecret'].map($);
   function validate() {
-    send.disabled = !redirect || fields.some(f => !f.value.trim());
-    const dom = domainInput.value.trim().toLowerCase();
-    $('sendWarn').hidden = send.disabled || st.online || !user() || dom !== user() + '.github.io';
+    send.disabled = !redirect || !domain() || fields.some(f => !f.value.trim());
+    $('sendWarn').hidden = send.disabled || st.online || !user();
   }
   fields.forEach(f => f.addEventListener('input', validate));
   $('clientId').addEventListener('input', () => store.set('clientId', $('clientId').value));
-  domainInput.addEventListener('input', () => { store.set('domain', domainInput.value); render(); });
+  let originDebounce;
+  originInput.addEventListener('input', () => {
+    store.set('origin', originInput.value);
+    st.online = false; render();
+    clearTimeout(originDebounce);
+    originDebounce = setTimeout(() => check(false), 700);
+  });
+  originInput.addEventListener('blur', () => {
+    if (!domain()) return;
+    originInput.value = 'https://' + domain();
+    store.set('origin', originInput.value);
+  });
   region.addEventListener('change', () => { store.set('region', region.value); render(); });
 
   ghuser.value = store.get('ghuser');
   $('clientId').value = store.get('clientId');
-  domainInput.value = store.get('domain');
+  originInput.value = store.get('origin');
+  // A restored origin that still matches the username keeps following it.
+  if (originInput.value && originInput.value === 'https://' + user() + '.github.io') autoOrigin = originInput.value;
   let tz = '';
   try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
   region.value = store.get('region') || (/^(Asia\/(Shanghai|Chongqing|Harbin|Urumqi))$/.test(tz) ? 'cn' : /^(America|Pacific\/Honolulu|US|Canada)/.test(tz) ? 'na' : 'eu');
@@ -374,7 +387,7 @@
   send.addEventListener('click', () => {
     const data = {
       region: region.value,
-      domain: domainInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, ''),
+      domain: domain(),
       clientId: $('clientId').value.trim(),
       clientSecret: $('clientSecret').value.trim(),
     };
