@@ -52,6 +52,7 @@
   <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages. Gib nur deinen Benutzernamen ein, die Seite erkennt selbst, was noch fehlt.</p>
   <label>Dein GitHub-Benutzername <a href="https://github.com/signup" target="_blank" rel="noopener" class="muted">(noch keiner? Konto anlegen)</a></label>
   <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <p class="muted">Dein echter Benutzername, nicht ausgedacht: GitHub vergibt die Adresse <code>name.github.io</code> nur dafür. Er steht auf github.com oben rechts im Menü.</p>
 
   <ul class="status" id="status" hidden>
     <li id="stRepo">Repository <code class="dom"></code></li>
@@ -109,7 +110,7 @@
       <option value="cn">China</option>
     </select>
   </details>
-  <p id="sendWarn" class="warn" hidden>Der Key ist noch nicht online. Bitte erst Schritt 1 abschließen, sonst lehnt Tesla die Registrierung ab.</p>
+  <p id="sendWarn" class="warn" hidden></p>
   <button id="send" class="primary" disabled>An die Uhr senden</button>
   <p class="muted">Die Uhr registriert danach die Domain bei Tesla, öffnet den Link zum Koppeln des Virtual Key auf diesem Handy und meldet dich an.</p>
 </div>
@@ -181,6 +182,14 @@
       if (!useApi || (st.nojekyll && st.key === 'ok')) return;
       if (!token.value.trim() && apiCalls > 45) { st.limited = true; return; }
 
+      // Only a real account name gives a <name>.github.io domain, so check it before anything is created.
+      if (!st.userOk) {
+        const who = await gh('/users/' + u);
+        if (u !== user()) return;
+        if (who.status === 404) { st = { noUser: true }; return; }
+        if (who.ok) st.userOk = true;
+      }
+
       const r = await gh('/repos/' + u + '/' + repo + '/git/trees/HEAD?recursive=1');
       if (u !== user()) return;
       if (r.status === 404) { st = { repo: false }; return; }
@@ -224,6 +233,21 @@
     $('h1').innerHTML = '1. Public Key deiner Uhr veröffentlichen' + (st.online ? ' <span class="done">✓</span>' : '');
     validate();
     if (!u || !pem) return;
+
+    if (st.noUser) {
+      $('status').hidden = next.hidden = true;
+      hint.className = 'warn';
+      hint.textContent = 'Den GitHub-Benutzer „' + u + '“ gibt es nicht. Trage deinen eigenen Benutzernamen ein – er steht auf github.com oben rechts im Menü. ' +
+        'Ein ausgedachter Name funktioniert nicht, weil GitHub nur für den echten Benutzernamen eine Adresse „name.github.io“ vergibt.';
+      return;
+    }
+    hint.className = 'muted';
+    // Don't offer to create anything before the account name is confirmed.
+    if (!st.userOk && !st.limited && !st.online) {
+      $('status').hidden = next.hidden = true;
+      hint.textContent = 'Prüfe den GitHub-Benutzer „' + u + '“ …';
+      return;
+    }
 
     const base = 'https://github.com/' + u + '/' + dom;
     const newFile = (name, value) => base + '/new/' + encodeURIComponent(st.branch || 'main') + '?filename=' + encodeURIComponent(name) + '&value=' + encodeURIComponent(value);
@@ -355,7 +379,19 @@
   const fields = ['origin', 'clientId', 'clientSecret'].map($);
   function validate() {
     send.disabled = !redirect || !domain() || fields.some(f => !f.value.trim());
-    $('sendWarn').hidden = send.disabled || st.online || !user();
+    const warn = $('sendWarn');
+    warn.hidden = send.disabled || st.online || !user();
+    if (!warn.hidden) {
+      warn.textContent = domain() !== user() + '.github.io'
+        ? 'Der Schlüssel deiner Uhr ist unter ' + domain() + ' nicht abrufbar. Sonst lehnt Tesla die Registrierung ab.'
+        : 'Schritt 1 ist noch offen: ' + (
+        st.key === 'other' ? 'Unter ' + domain() + ' liegt der Schlüssel eines anderen Geräts. Oben auf „Alten Key ersetzen“ tippen.'
+        : !st.repo ? 'Das Repository ' + domain() + ' gibt es noch nicht.'
+        : !st.nojekyll ? 'Die Datei .nojekyll fehlt, ohne sie versteckt GitHub den Schlüssel.'
+        : !st.key ? 'Der Schlüssel deiner Uhr liegt noch nicht im Repository.'
+        : 'Der Schlüssel ist noch nicht unter ' + domain() + ' abrufbar (GitHub braucht 1–2 Minuten).'
+      ) + ' Sonst lehnt Tesla die Registrierung ab.';
+    }
   }
   fields.forEach(f => f.addEventListener('input', validate));
   $('clientId').addEventListener('input', () => store.set('clientId', $('clientId').value));
