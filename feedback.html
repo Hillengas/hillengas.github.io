@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch for Tesla – Feedback</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 20px 16px 40px; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.45; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { font-size: 15px; color: #d0d0d4; }
+  .card { background: #1c1c1e; border-radius: 14px; padding: 14px; margin: 10px 0; }
+  a.btn { display: block; width: 100%; box-sizing: border-box; text-align: center; font-size: 16px; font-weight: 600; padding: 14px; margin-top: 12px; border-radius: 12px; background: #e82127; color: #fff; text-decoration: none; }
+  .muted { color: #9a9a9e; font-size: 13px; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Watch for Tesla · Feedback</h1>
+<p>Danke! Du wirst gleich zum Feedback-Formular weitergeleitet. Keine Anmeldung nötig.</p>
+<div class="card">
+  <a id="open" class="btn" href="#">Feedback-Formular öffnen</a>
+  <p class="muted" id="info"></p>
+</div>
+<p class="muted">Das Formular wird von Google Forms bereitgestellt. Übermittelt werden nur dein Text, ein optionaler Kontakt und die unten stehenden Geräteangaben; siehe <a href="privacy.html">Datenschutz</a>.</p>
+<script>
+  // Same form as in the app (app/build.gradle.kts: FEEDBACK_FORM_URL). Keep the entry IDs in sync.
+  var FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSek6l4aaSDejawnUi7cWVfmWVTP-fF69PJBajOQVD4xPyk_yg/viewform';
+  var ENTRIES = { v: 'entry.1210453077', w: 'entry.842004440', os: 'entry.1144378399', c: 'entry.32876464' };
+
+  var q = new URLSearchParams(location.search);
+  var params = ['usp=pp_url'];
+  var lines = [];
+  Object.keys(ENTRIES).forEach(function (k) {
+    var val = q.get(k);
+    if (val) {
+      params.push(ENTRIES[k] + '=' + encodeURIComponent(val));
+      lines.push(val);
+    }
+  });
+  var url = FORM + '?' + params.join('&');
+  document.getElementById('open').href = url;
+  document.getElementById('info').textContent = lines.length ? 'Vorausgefüllt: ' + lines.join(' · ') : '';
+  // Forward automatically; the button stays as fallback.
+  setTimeout(function () { location.replace(url); }, 600);
+</script>
+</body>
+</html>

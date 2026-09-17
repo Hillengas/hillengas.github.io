@@ -9,6 +9,7 @@
   body { margin: 0; padding: 20px 16px 40px; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.45; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   h2 { font-size: 16px; margin: 26px 0 8px; color: #e82127; }
+  h2 .done { color: #34c759; }
   p, li { font-size: 15px; color: #d0d0d4; }
   .card { background: #1c1c1e; border-radius: 14px; padding: 14px; margin: 10px 0; }
   label { display: block; font-size: 13px; color: #9a9a9e; margin: 10px 0 4px; }
@@ -21,114 +22,361 @@
   .muted { color: #9a9a9e; font-size: 13px; }
   .ok { color: #34c759; }
   .warn { color: #ffb020; }
-  .copy-row { display: flex; gap: 8px; }
-  .copy-row button { margin-top: 8px; }
+  ul.status { list-style: none; padding: 0; margin: 12px 0 0; }
+  ul.status li { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; color: #9a9a9e; }
+  ul.status li::before { content: "○"; width: 16px; text-align: center; flex: none; }
+  ul.status li.ok { color: #34c759; }
+  ul.status li.ok::before { content: "✓"; }
+  ul.status li.now { color: #fff; font-weight: 600; }
+  ul.status li.now::before { content: "→"; color: #e82127; }
+  ul.status li.wait { color: #ffb020; }
+  ul.status li.wait::before { content: "…"; }
+  details { margin-top: 14px; border-top: 1px solid #2c2c2e; padding-top: 10px; }
+  summary { font-size: 14px; color: #d0d0d4; cursor: pointer; }
+  .copyable { display: flex; align-items: center; gap: 8px; margin: 6px 0 12px; }
+  .copyable code { flex: 1; min-width: 0; overflow-wrap: anywhere; background: #111; border-radius: 8px; padding: 9px 10px; }
+  .copyable button { width: auto; flex: none; margin: 0; padding: 9px 12px; font-size: 13px; border-radius: 8px; }
 </style>
 </head>
 <body>
 <h1>Tesla Watch · Cloud-Einrichtung</h1>
-<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Alles bleibt bei dir: Diese Seite speichert nichts, die Daten gehen am Ende nur an deine Uhr.</p>
+<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Alles bleibt bei dir: Diese Seite hat keinen Server, die Daten gehen am Ende nur an deine Uhr.</p>
 
 <div id="nowatch" class="card" hidden>
   <p class="warn">Diese Seite wurde nicht von der Uhr geöffnet. Bitte auf der Uhr <b>Einstellungen → Cloud → Am Handy einrichten</b> antippen, dann öffnet sie sich hier automatisch mit den Daten deiner Uhr.</p>
 </div>
 
-<h2>1. Public Key deiner Uhr veröffentlichen</h2>
+<h2 id="h1">1. Public Key deiner Uhr veröffentlichen</h2>
 <div class="card">
-  <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages.</p>
-  <label>Dein GitHub-Benutzername</label>
-  <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off">
-  <p class="muted">Deine Domain ist dann <code id="domainPreview">&lt;name&gt;.github.io</code>.</p>
-  <a id="ghNewRepo" class="btn" href="https://github.com/new" target="_blank" rel="noopener">a) Repository „&lt;name&gt;.github.io“ anlegen (öffentlich)</a>
-  <a id="ghNoJekyll" class="btn" href="#" target="_blank" rel="noopener">b) Datei „.nojekyll“ anlegen</a>
-  <a id="ghKeyFile" class="btn primary" href="#" target="_blank" rel="noopener">c) Public Key als Datei anlegen</a>
-  <p class="muted">Bei b) und c) öffnet sich GitHub mit vorausgefülltem Inhalt – nur unten auf „Commit changes“ tippen. Nach 1–2 Minuten ist der Key online.</p>
-  <label>Public Key (falls du ihn woanders hosten willst)</label>
-  <textarea id="pem" readonly></textarea>
-  <div class="copy-row"><button id="copyPem">Key kopieren</button></div>
+  <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages. Gib nur deinen Benutzernamen ein, die Seite erkennt selbst, was noch fehlt.</p>
+  <label>Dein GitHub-Benutzername <a href="https://github.com/signup" target="_blank" rel="noopener" class="muted">(noch keiner? Konto anlegen)</a></label>
+  <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off" spellcheck="false">
+
+  <ul class="status" id="status" hidden>
+    <li id="stRepo">Repository <code class="dom"></code></li>
+    <li id="stNoJekyll">Datei <code>.nojekyll</code></li>
+    <li id="stKey">Public Key der Uhr</li>
+    <li id="stOnline">Online erreichbar</li>
+  </ul>
+  <a id="next" class="btn primary" href="#" target="_blank" rel="noopener" hidden></a>
+  <p id="hint" class="muted" hidden></p>
+
+  <details id="autoBox">
+    <summary>Noch schneller: alles automatisch per GitHub-Token</summary>
+    <p class="muted">Ein Tipp erzeugt einen Token, danach legt diese Seite Repository, <code>.nojekyll</code> und Key selbst an. Der Token bleibt in diesem Browser-Tab und geht nur an api.github.com.</p>
+    <a class="btn" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Tesla%20Watch%20Setup" target="_blank" rel="noopener">a) Token erzeugen (unten „Generate token“, dann kopieren)</a>
+    <label>b) Token hier einfügen</label>
+    <input id="token" type="password" placeholder="ghp_…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
+    <button id="autoRun" class="primary" disabled>Automatisch einrichten</button>
+    <p id="autoLog" class="muted"></p>
+  </details>
+
+  <details>
+    <summary>Key woanders hosten (eigene Domain)</summary>
+    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Domain in Schritt 3 ein.</p>
+    <textarea id="pem" readonly></textarea>
+    <button id="copyPem">Key kopieren</button>
+  </details>
 </div>
 
 <h2>2. Tesla-Developer-App anlegen</h2>
 <div class="card">
-  <p>Auf <a href="https://developer.tesla.com" target="_blank" rel="noopener">developer.tesla.com</a> anmelden → „Create new app“ und eintragen:</p>
-  <ul>
-    <li><b>Allowed Origin(s):</b> <code id="originPreview">https://&lt;name&gt;.github.io</code></li>
-    <li><b>Allowed Redirect URI(s):</b> <code id="redirectPreview"></code></li>
-    <li><b>Scopes:</b> vehicle_device_data, vehicle_cmds, vehicle_charging_cmds</li>
-  </ul>
+  <p>Auf developer.tesla.com anmelden → „Create new app“. Diese Werte antippen zum Kopieren:</p>
+  <label>Allowed Origin(s)</label>
+  <div class="copyable"><code id="originPreview"></code><button data-copy="originPreview">Kopieren</button></div>
+  <label>Allowed Redirect URI(s)</label>
+  <div class="copyable"><code id="redirectPreview"></code><button data-copy="redirectPreview">Kopieren</button></div>
+  <label>Scopes (ankreuzen)</label>
+  <p style="margin:4px 0 0">Vehicle Information · Vehicle Commands · Vehicle Charging Management</p>
+  <p class="muted" style="margin:2px 0 0">(vehicle_device_data, vehicle_cmds, vehicle_charging_cmds)</p>
   <p class="muted">Unter „Billing“ eine Zahlungsmethode hinterlegen (Tesla schenkt 10 $ Guthaben pro Monat, das reicht privat locker). Danach Client ID und Client Secret kopieren.</p>
-  <a class="btn" href="https://developer.tesla.com" target="_blank" rel="noopener">developer.tesla.com öffnen</a>
+  <a class="btn" href="https://developer.tesla.com/dashboard" target="_blank" rel="noopener">developer.tesla.com öffnen</a>
 </div>
 
 <h2>3. Zugangsdaten an die Uhr senden</h2>
 <div class="card">
-  <label>Region</label>
-  <select id="region">
-    <option value="eu">Europa / Rest der Welt</option>
-    <option value="na">Nordamerika</option>
-    <option value="cn">China</option>
-  </select>
-  <label>Domain</label>
-  <input id="domain" placeholder="name.github.io" autocapitalize="none" autocorrect="off">
   <label>Client ID</label>
-  <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off">
+  <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off" spellcheck="false">
   <label>Client Secret</label>
-  <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off">
+  <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <details>
+    <summary>Region und Domain <span id="rdSummary" class="muted"></span></summary>
+    <label>Region</label>
+    <select id="region">
+      <option value="eu">Europa / Rest der Welt</option>
+      <option value="na">Nordamerika</option>
+      <option value="cn">China</option>
+    </select>
+    <label>Domain</label>
+    <input id="domain" placeholder="name.github.io" autocapitalize="none" autocorrect="off" spellcheck="false">
+  </details>
+  <p id="sendWarn" class="warn" hidden>Der Key ist noch nicht online. Bitte erst Schritt 1 abschließen, sonst lehnt Tesla die Registrierung ab.</p>
   <button id="send" class="primary" disabled>An die Uhr senden</button>
   <p class="muted">Die Uhr registriert danach die Domain bei Tesla, öffnet den Link zum Koppeln des Virtual Key auf diesem Handy und meldet dich an.</p>
 </div>
 
 <script>
 (function () {
+  const $ = id => document.getElementById(id);
   const q = new URLSearchParams(location.search);
   const redirect = q.get('redirect_uri') || '';
   const state = q.get('state') || '';
   const pkB64 = q.get('pk') || '';
   const pkg = q.get('pkg') || 'de.gebhard.teslawatch';
+  const KEY_PATH = '.well-known/appspecific/com.tesla.3p.public-key.pem';
 
-  document.getElementById('redirectPreview').textContent = 'https://wear.googleapis.com/3p_auth/' + pkg;
-  if (!redirect) document.getElementById('nowatch').hidden = false;
+  $('redirectPreview').textContent = 'https://wear.googleapis.com/3p_auth/' + pkg;
+  if (!redirect) $('nowatch').hidden = false;
 
   let pem = '';
   try { pem = decodeURIComponent(escape(atob(pkB64.replace(/-/g, '+').replace(/_/g, '/')))); } catch (e) { pem = ''; }
-  document.getElementById('pem').value = pem || '(Kein Schlüssel übermittelt – Seite von der Uhr aus öffnen)';
+  $('pem').value = pem || '(Kein Schlüssel übermittelt – Seite von der Uhr aus öffnen)';
 
-  const ghuser = document.getElementById('ghuser');
-  const domainInput = document.getElementById('domain');
-  function updateGh() {
-    const u = ghuser.value.trim().toLowerCase();
-    const dom = u ? u + '.github.io' : '<name>.github.io';
-    document.getElementById('domainPreview').textContent = dom;
-    document.getElementById('originPreview').textContent = 'https://' + dom;
-    document.getElementById('ghNewRepo').textContent = 'a) Repository „' + dom + '“ anlegen (öffentlich)';
-    if (u) {
-      const repo = 'https://github.com/' + u + '/' + u + '.github.io/new/main';
-      document.getElementById('ghNoJekyll').href = repo + '?filename=.nojekyll&value=' + encodeURIComponent(' ');
-      document.getElementById('ghKeyFile').href = repo + '?filename=' + encodeURIComponent('.well-known/appspecific/com.tesla.3p.public-key.pem') + '&value=' + encodeURIComponent(pem);
-      if (!domainInput.value) domainInput.value = dom;
+  // Mobile browsers may reload this tab after a trip to GitHub; keep the non-secret fields.
+  const store = {
+    get(k) { try { return sessionStorage.getItem('tw.' + k) || ''; } catch (e) { return ''; } },
+    set(k, v) { try { sessionStorage.setItem('tw.' + k, v); } catch (e) {} },
+  };
+
+  const ghuser = $('ghuser'), domainInput = $('domain'), region = $('region'), token = $('token');
+  const squash = s => (s || '').replace(/\s+/g, '');
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const user = () => { const u = ghuser.value.trim().replace(/^@/, '').toLowerCase(); return /^[a-z\d](?:[a-z\d-]{0,38})$/.test(u) ? u : ''; };
+
+  // ---- GitHub state detection -------------------------------------------------------------
+  let st = {};            // { repo, empty, branch, nojekyll, key: 'ok' | 'other' | '', online, limited }
+  let autoDomain = '';
+  let apiCalls = 0, checking = false, checkedFor = '';
+  const keyCache = {};    // blob sha -> matches this watch's key
+
+  async function gh(path, opt) {
+    opt = opt || {};
+    const headers = Object.assign({ Accept: 'application/vnd.github+json' }, opt.headers);
+    const t = token.value.trim();
+    if (t) headers.Authorization = 'Bearer ' + t;
+    if (opt.body) headers['Content-Type'] = 'application/json';
+    apiCalls++;
+    return fetch('https://api.github.com' + path, { method: opt.method || 'GET', headers, body: opt.body ? JSON.stringify(opt.body) : undefined, cache: 'no-store' });
+  }
+
+  async function isOnline(dom) {
+    try {
+      const r = await fetch('https://' + dom + '/' + KEY_PATH + '?t=' + Date.now(), { cache: 'no-store' });
+      return r.ok && squash(await r.text()) === squash(pem);
+    } catch (e) { return false; }
+  }
+
+  // useApi = false only polls the published file, which does not count against GitHub's rate limit.
+  async function check(useApi) {
+    const u = user();
+    if (!u || !pem || checking) return;
+    checking = true;
+    try {
+      const repo = u + '.github.io';
+      if (checkedFor !== u) { st = {}; checkedFor = u; }
+      if (await isOnline(repo)) { st = { repo: true, nojekyll: true, key: 'ok', online: true }; return; }
+      if (u !== user()) return;
+      st.online = false;
+      if (!useApi || (st.nojekyll && st.key === 'ok')) return;
+      if (!token.value.trim() && apiCalls > 45) { st.limited = true; return; }
+
+      const r = await gh('/repos/' + u + '/' + repo + '/git/trees/HEAD?recursive=1');
+      if (u !== user()) return;
+      if (r.status === 404) { st = { repo: false }; return; }
+      if (r.status === 409) { st = { repo: true, empty: true, branch: 'main' }; return; }
+      if (!r.ok) { st.limited = true; return; }
+      const tree = (await r.json()).tree || [];
+      st.limited = false; st.repo = true; st.empty = false;
+      st.nojekyll = tree.some(f => f.path === '.nojekyll');
+      if (!st.branch || st.branch === 'main') {
+        const info = await gh('/repos/' + u + '/' + repo);
+        st.branch = info.ok ? (await info.json()).default_branch : 'main';
+      }
+      const blob = tree.find(f => f.path === KEY_PATH);
+      if (!blob) { st.key = ''; return; }
+      if (!(blob.sha in keyCache)) {
+        const c = await gh('/repos/' + u + '/' + repo + '/contents/' + KEY_PATH, { headers: { Accept: 'application/vnd.github.raw' } });
+        if (c.ok) keyCache[blob.sha] = squash(await c.text()) === squash(pem);
+      }
+      st.key = keyCache[blob.sha] === false ? 'other' : 'ok';
+    } catch (e) {
+      st.limited = true;
+    } finally {
+      checking = false;
+      render();
     }
   }
-  ghuser.addEventListener('input', updateGh);
-  updateGh();
 
-  document.getElementById('copyPem').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(pem); document.getElementById('copyPem').textContent = 'Kopiert ✓'; } catch (e) { document.getElementById('pem').select(); }
+  function setRow(id, cls) { $(id).className = cls; }
+
+  function render() {
+    const u = user();
+    const dom = u ? u + '.github.io' : '';
+    document.querySelectorAll('.dom').forEach(e => e.textContent = dom);
+    $('originPreview').textContent = 'https://' + (domainInput.value.trim() || dom || '<name>.github.io');
+    if (dom && (!domainInput.value || domainInput.value === autoDomain)) { domainInput.value = dom; }
+    if (dom) autoDomain = dom;
+    $('rdSummary').textContent = '· ' + region.options[region.selectedIndex].text + (domainInput.value ? ' · ' + domainInput.value : '');
+
+    const next = $('next'), hint = $('hint');
+    $('status').hidden = next.hidden = hint.hidden = !u || !pem;
+    $('h1').innerHTML = '1. Public Key deiner Uhr veröffentlichen' + (st.online ? ' <span class="done">✓</span>' : '');
+    validate();
+    if (!u || !pem) return;
+
+    const base = 'https://github.com/' + u + '/' + dom;
+    const newFile = (name, value) => base + '/new/' + encodeURIComponent(st.branch || 'main') + '?filename=' + encodeURIComponent(name) + '&value=' + encodeURIComponent(value);
+    const steps = [
+      { id: 'stRepo', done: st.repo, label: 'Repository anlegen', href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Tesla Watch)'),
+        hint: 'GitHub öffnet sich fertig ausgefüllt – nur unten auf „Create repository“ tippen und hierher zurückkommen.' },
+      { id: 'stNoJekyll', done: st.nojekyll, label: 'Datei „.nojekyll“ anlegen', href: newFile('.nojekyll', ' '),
+        hint: 'Alles ist ausgefüllt – nur auf „Commit changes“ tippen und zurückkommen.' },
+      { id: 'stKey', done: st.key === 'ok', label: st.key === 'other' ? 'Alten Key ersetzen (neuer Key wird kopiert)' : 'Public Key anlegen',
+        href: st.key === 'other' ? base + '/edit/' + encodeURIComponent(st.branch || 'main') + '/' + KEY_PATH : newFile(KEY_PATH, pem),
+        hint: st.key === 'other' ? 'Im Repository liegt der Key eines anderen Geräts. Inhalt komplett markieren, den kopierten Key einfügen, „Commit changes“.' : 'Alles ist ausgefüllt – nur auf „Commit changes“ tippen und zurückkommen.' },
+    ];
+    const current = steps.find(s => !s.done);
+    steps.forEach(s => setRow(s.id, s.done ? 'ok' : s === current ? 'now' : ''));
+    setRow('stOnline', st.online ? 'ok' : current ? '' : 'wait');
+
+    next.hidden = !current;
+    if (current) {
+      next.textContent = current.label;
+      next.href = current.href;
+      hint.textContent = current.hint + (st.limited ? ' (GitHub lässt gerade keine Statusabfrage zu – einfach die Schritte nacheinander antippen.)' : '');
+    } else if (st.online) {
+      hint.innerHTML = '<span class="ok">Fertig – der Key ist unter ' + dom + ' erreichbar.</span> Weiter mit Schritt 2.';
+    } else {
+      hint.textContent = 'GitHub veröffentlicht den Key gerade. Das dauert 1–2 Minuten, die Seite prüft automatisch weiter.';
+    }
+  }
+
+  $('next').addEventListener('click', () => {
+    if (st.key === 'other' && st.repo && st.nojekyll) { try { navigator.clipboard.writeText(pem); } catch (e) {} }
+    // Without status detection fall through the steps one by one.
+    if (st.limited) setTimeout(() => {
+      if (!st.repo) { st.repo = true; st.branch = 'main'; } else if (!st.nojekyll) st.nojekyll = true; else st.key = 'ok';
+      render();
+    }, 1000);
   });
 
-  const send = document.getElementById('send');
-  const fields = ['domain', 'clientId', 'clientSecret'].map(id => document.getElementById(id));
+  let debounce;
+  ghuser.addEventListener('input', () => {
+    store.set('ghuser', ghuser.value);
+    st = {}; checkedFor = '';
+    render();
+    clearTimeout(debounce);
+    debounce = setTimeout(() => check(true), 700);
+  });
+  // Coming back from GitHub: ask the API a few times in quick succession, then fall back to the slow cadence.
+  let tick = 0, burst = 0;
+  const cameBack = () => { burst = 3; check(true); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) cameBack(); });
+  window.addEventListener('focus', cameBack);
+  setInterval(() => {
+    if (document.hidden || st.online || !user()) return;
+    tick++;
+    check(burst-- > 0 || tick % 4 === 0);   // published file every 6 s, GitHub API every 24 s
+  }, 6000);
+
+  // ---- Automatic setup with a token -------------------------------------------------------
+  const autoRun = $('autoRun'), autoLog = $('autoLog');
+  token.addEventListener('input', () => { autoRun.disabled = !token.value.trim() || !pem; });
+
+  async function putFile(repoPath, path, content, log) {
+    const url = repoPath + '/contents/' + path;
+    for (let attempt = 0; ; attempt++) {
+      const cur = await gh(url);
+      let sha;
+      if (cur.ok) {
+        const j = await cur.json();
+        if (squash(atob(squash(j.content))) === squash(content)) return;
+        sha = j.sha;
+      }
+      const r = await gh(url, { method: 'PUT', body: { message: log, content: btoa(content), sha } });
+      if (r.ok) return;
+      if (attempt >= 3) throw new Error(path + ': ' + ((await r.json().catch(() => ({}))).message || r.status));
+      await sleep(1500);   // a freshly created repository needs a moment
+    }
+  }
+
+  autoRun.addEventListener('click', async () => {
+    autoRun.disabled = true;
+    const say = t => { autoLog.className = 'muted'; autoLog.textContent = t; };
+    try {
+      say('Melde mich bei GitHub an …');
+      const me = await gh('/user');
+      if (!me.ok) throw new Error(me.status === 401 ? 'Token ungültig' : 'GitHub antwortet mit ' + me.status);
+      const login = (await me.json()).login.toLowerCase();
+      ghuser.value = login; store.set('ghuser', login);
+      st = {}; checkedFor = login; render();
+      const repo = login + '.github.io', repoPath = '/repos/' + login + '/' + repo;
+
+      const have = await gh(repoPath);
+      if (have.status === 404) {
+        say('Lege Repository ' + repo + ' an …');
+        const made = await gh('/user/repos', { method: 'POST', body: { name: repo, description: 'Tesla Public Key (Tesla Watch)', private: false } });
+        if (!made.ok) throw new Error('Repository: ' + ((await made.json().catch(() => ({}))).message || made.status) + ' (Token braucht den Scope „public_repo“)');
+      } else if (have.ok && (await have.json()).private) {
+        throw new Error('Das Repository ' + repo + ' ist privat – bitte auf GitHub öffentlich stellen.');
+      }
+      st.repo = true; render();
+      say('Lege .nojekyll an …');
+      await putFile(repoPath, '.nojekyll', '\n', 'Add .nojekyll (Tesla Watch)');
+      st.nojekyll = true; render();
+      say('Lege den Public Key an …');
+      await putFile(repoPath, KEY_PATH, pem, 'Add Tesla public key (Tesla Watch)');
+      st.key = 'ok'; render();
+      // User sites publish on their own; this only helps when Pages was switched off.
+      await gh(repoPath + '/pages', { method: 'POST', body: { source: { branch: 'main', path: '/' } } }).catch(() => {});
+      autoLog.className = 'ok';
+      autoLog.innerHTML = 'Erledigt ✓ GitHub veröffentlicht den Key jetzt (1–2 Minuten). Den Token kannst du danach <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">hier wieder löschen</a>.';
+      check(false);
+    } catch (e) {
+      autoLog.className = 'warn';
+      autoLog.textContent = 'Hat nicht geklappt: ' + e.message;
+    } finally {
+      autoRun.disabled = !token.value.trim();
+    }
+  });
+
+  // ---- Copy helpers -----------------------------------------------------------------------
+  async function copy(text, btn) {
+    const old = btn.textContent;
+    try { await navigator.clipboard.writeText(text); btn.textContent = 'Kopiert ✓'; } catch (e) { btn.textContent = 'Bitte markieren'; }
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  }
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy($(b.dataset.copy).textContent, b)));
+  $('copyPem').addEventListener('click', () => copy(pem, $('copyPem')));
+
+  // ---- Send to the watch ------------------------------------------------------------------
+  const send = $('send');
+  const fields = ['domain', 'clientId', 'clientSecret'].map($);
   function validate() {
     send.disabled = !redirect || fields.some(f => !f.value.trim());
+    const dom = domainInput.value.trim().toLowerCase();
+    $('sendWarn').hidden = send.disabled || st.online || !user() || dom !== user() + '.github.io';
   }
   fields.forEach(f => f.addEventListener('input', validate));
-  validate();
+  $('clientId').addEventListener('input', () => store.set('clientId', $('clientId').value));
+  domainInput.addEventListener('input', () => { store.set('domain', domainInput.value); render(); });
+  region.addEventListener('change', () => { store.set('region', region.value); render(); });
+
+  ghuser.value = store.get('ghuser');
+  $('clientId').value = store.get('clientId');
+  domainInput.value = store.get('domain');
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  region.value = store.get('region') || (/^(Asia\/(Shanghai|Chongqing|Harbin|Urumqi))$/.test(tz) ? 'cn' : /^(America|Pacific\/Honolulu|US|Canada)/.test(tz) ? 'na' : 'eu');
+  render();
+  check(true);
 
   send.addEventListener('click', () => {
     const data = {
-      region: document.getElementById('region').value,
+      region: region.value,
       domain: domainInput.value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, ''),
-      clientId: document.getElementById('clientId').value.trim(),
-      clientSecret: document.getElementById('clientSecret').value.trim(),
+      clientId: $('clientId').value.trim(),
+      clientSecret: $('clientSecret').value.trim(),
     };
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     location.href = redirect + '?code=' + encodeURIComponent(code) + '&state=' + encodeURIComponent(state);
