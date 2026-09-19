@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tesla Watch – Cloud-Einrichtung</title>
+<title>Watch for Tesla – Cloud-Einrichtung</title>
 <style>
   :root { color-scheme: dark; }
   body { margin: 0; padding: 20px 16px 40px; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.45; }
@@ -40,7 +40,7 @@
 </style>
 </head>
 <body>
-<h1>Tesla Watch · Cloud-Einrichtung</h1>
+<h1>Watch for Tesla · Cloud-Einrichtung</h1>
 <p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Alles bleibt bei dir: Diese Seite hat keinen Server, die Daten gehen am Ende nur an deine Uhr.</p>
 
 <div id="nowatch" class="card" hidden>
@@ -66,7 +66,7 @@
   <details id="autoBox">
     <summary>Noch schneller: alles automatisch per GitHub-Token</summary>
     <p class="muted">Ein Tipp erzeugt einen Token, danach legt diese Seite Repository, <code>.nojekyll</code> und Key selbst an. Der Token bleibt in diesem Browser-Tab und geht nur an api.github.com.</p>
-    <a class="btn" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Tesla%20Watch%20Setup" target="_blank" rel="noopener">a) Token erzeugen (unten „Generate token“, dann kopieren)</a>
+    <a class="btn" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Watch%20for%20Tesla%20Setup" target="_blank" rel="noopener">a) Token erzeugen (unten „Generate token“, dann kopieren)</a>
     <label>b) Token hier einfügen</label>
     <input id="token" type="password" placeholder="ghp_…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
     <button id="autoRun" class="primary" disabled>Automatisch einrichten</button>
@@ -112,14 +112,23 @@
   </details>
   <p id="sendWarn" class="warn" hidden></p>
   <button id="send" class="primary" disabled>An die Uhr senden</button>
-  <p class="muted">Die Uhr registriert danach die Domain bei Tesla, öffnet den Link zum Koppeln des Virtual Key auf diesem Handy und meldet dich an.</p>
+  <p class="muted"><b>Damit bist du noch nicht fertig.</b> Nach dem Senden geht es auf diesem Handy von selbst weiter – bitte dranbleiben:</p>
+  <ol class="muted" style="margin:4px 0 0;padding-left:20px">
+    <li>Die Uhr registriert deine Domain bei Tesla (ein paar Sekunden).</li>
+    <li>Hier öffnet sich der <b>Tesla-Login</b>: anmelden und „Zulassen“ wählen. Erst das verbindet die Uhr mit deinem Konto – die Anmeldung bei developer.tesla.com zählt dafür nicht.</li>
+    <li>Danach öffnet sich die <b>Tesla-App</b>: Auto wählen und die Uhr als Schlüssel bestätigen. Ohne das lehnt das Auto jeden Befehl ab.</li>
+  </ol>
+  <p class="muted">Öffnet sich nichts? Auf der Uhr unter Einstellungen → Cloud steht oben immer der nächste Schritt.</p>
 </div>
 
 <script>
 (function () {
   const $ = id => document.getElementById(id);
   const q = new URLSearchParams(location.search);
-  const redirect = q.get('redirect_uri') || '';
+  // The credentials are sent to this address, so only the Wear OS companion endpoint is accepted.
+  // A crafted link with another redirect_uri must not be able to collect a client secret.
+  const rawRedirect = q.get('redirect_uri') || '';
+  const redirect = /^https:\/\/wear\.googleapis(-cn)?\.com\/3p_auth\/[A-Za-z0-9_.]+$/.test(rawRedirect) ? rawRedirect : '';
   const state = q.get('state') || '';
   const pkB64 = q.get('pk') || '';
   const pkg = q.get('pkg') || 'de.gebhard.teslawatch';
@@ -252,7 +261,7 @@
     const base = 'https://github.com/' + u + '/' + dom;
     const newFile = (name, value) => base + '/new/' + encodeURIComponent(st.branch || 'main') + '?filename=' + encodeURIComponent(name) + '&value=' + encodeURIComponent(value);
     const steps = [
-      { id: 'stRepo', done: st.repo, label: 'Repository anlegen', href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Tesla Watch)'),
+      { id: 'stRepo', done: st.repo, label: 'Repository anlegen', href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Watch for Tesla)'),
         hint: 'GitHub öffnet sich fertig ausgefüllt – nur unten auf „Create repository“ tippen und hierher zurückkommen.' },
       { id: 'stNoJekyll', done: st.nojekyll, label: 'Datei „.nojekyll“ anlegen', href: newFile('.nojekyll', ' '),
         hint: 'Alles ist ausgefüllt – nur auf „Commit changes“ tippen und zurückkommen.' },
@@ -340,17 +349,17 @@
       const have = await gh(repoPath);
       if (have.status === 404) {
         say('Lege Repository ' + repo + ' an …');
-        const made = await gh('/user/repos', { method: 'POST', body: { name: repo, description: 'Tesla Public Key (Tesla Watch)', private: false } });
+        const made = await gh('/user/repos', { method: 'POST', body: { name: repo, description: 'Tesla Public Key (Watch for Tesla)', private: false } });
         if (!made.ok) throw new Error('Repository: ' + ((await made.json().catch(() => ({}))).message || made.status) + ' (Token braucht den Scope „public_repo“)');
       } else if (have.ok && (await have.json()).private) {
         throw new Error('Das Repository ' + repo + ' ist privat – bitte auf GitHub öffentlich stellen.');
       }
       st.repo = true; render();
       say('Lege .nojekyll an …');
-      await putFile(repoPath, '.nojekyll', '\n', 'Add .nojekyll (Tesla Watch)');
+      await putFile(repoPath, '.nojekyll', '\n', 'Add .nojekyll (Watch for Tesla)');
       st.nojekyll = true; render();
       say('Lege den Public Key an …');
-      await putFile(repoPath, KEY_PATH, pem, 'Add Tesla public key (Tesla Watch)');
+      await putFile(repoPath, KEY_PATH, pem, 'Add Tesla public key (Watch for Tesla)');
       st.key = 'ok'; render();
       // User sites publish on their own; this only helps when Pages was switched off.
       await gh(repoPath + '/pages', { method: 'POST', body: { source: { branch: 'main', path: '/' } } }).catch(() => {});
