@@ -41,15 +41,26 @@
 </head>
 <body>
 <h1>Watch for Tesla · Cloud-Einrichtung</h1>
-<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Alles bleibt bei dir: Diese Seite hat keinen Server, die Daten gehen am Ende nur an deine Uhr.</p>
+<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Für Bluetooth in der Nähe des Autos brauchst du das nicht. Alles bleibt bei dir: Diese Seite hat keinen Server, die Daten gehen am Ende nur an deine Uhr.</p>
 
-<div id="nowatch" class="card" hidden>
-  <p class="warn">Diese Seite wurde nicht von der Uhr geöffnet. Bitte auf der Uhr <b>Einstellungen → Cloud → Am Handy einrichten</b> antippen, dann öffnet sie sich hier automatisch mit den Daten deiner Uhr.</p>
+<div class="card">
+  <p style="margin:0"><b>Du brauchst:</b></p>
+  <ul style="margin:6px 0 0;padding-left:20px">
+    <li>ein GitHub-Konto (kostenlos)</li>
+    <li>dein Tesla-Konto mit aktiver 2-Faktor-Anmeldung</li>
+    <li>eine Kreditkarte, die du bei Tesla hinterlegst</li>
+  </ul>
+  <p class="muted" style="margin-bottom:0">Tesla schreibt dir 10 $ pro Monat gut; bei normaler privater Nutzung zahlst du meist nichts. Nur was darüber hinausgeht, bucht Tesla von der Karte ab. Dauer: ca. 15 Minuten.</p>
 </div>
 
-<h2 id="h1">1. Public Key deiner Uhr veröffentlichen</h2>
+<div id="nowatch" class="card" hidden>
+  <p class="warn">Diese Seite wurde nicht von der Uhr geöffnet. Bitte auf der Uhr <b>Einstellungen → Cloud (Fernzugriff) → Am Handy einrichten</b> antippen, dann öffnet sie sich hier automatisch mit den Daten deiner Uhr.</p>
+</div>
+
+<h2 id="h1">Handy-Einrichtung 1/3 · Public Key deiner Uhr veröffentlichen</h2>
 <div class="card">
   <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages. Gib nur deinen Benutzernamen ein, die Seite erkennt selbst, was noch fehlt.</p>
+  <p class="muted">Der öffentliche Schlüssel ist ungefährlich: Mit ihm kann niemand dein Auto öffnen – der geheime Teil bleibt auf der Uhr.</p>
   <label>Dein GitHub-Benutzername <a href="https://github.com/signup" target="_blank" rel="noopener" class="muted">(noch keiner? Konto anlegen)</a></label>
   <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off" spellcheck="false">
   <p class="muted">Dein echter Benutzername, nicht ausgedacht: GitHub vergibt die Adresse <code>name.github.io</code> nur dafür. Er steht auf github.com oben rechts im Menü.</p>
@@ -60,6 +71,7 @@
     <li id="stKey">Public Key der Uhr</li>
     <li id="stOnline">Online erreichbar</li>
   </ul>
+  <p class="muted" id="glossary" hidden>Repository = Projektordner bei GitHub · .nojekyll = leere Hilfsdatei, damit GitHub den Schlüssel anzeigt.</p>
   <a id="next" class="btn primary" href="#" target="_blank" rel="noopener" hidden></a>
   <p id="hint" class="muted" hidden></p>
 
@@ -75,15 +87,21 @@
 
   <details>
     <summary>Key woanders hosten (eigene Domain)</summary>
-    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Adresse in Schritt 2 unter „Allowed Origin“ ein.</p>
+    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Adresse in Teil 2/3 unter „Allowed Origin“ ein.</p>
     <textarea id="pem" readonly></textarea>
     <button id="copyPem">Key kopieren</button>
   </details>
 </div>
 
-<h2>2. Tesla-Developer-App anlegen</h2>
+<h2>Handy-Einrichtung 2/3 · Tesla-Developer-App anlegen</h2>
 <div class="card">
-  <p>Auf developer.tesla.com anmelden → „Create new app“. Diese Werte antippen zum Kopieren:</p>
+  <p>Auf developer.tesla.com mit deinem Tesla-Konto anmelden (2-Faktor-Anmeldung muss aktiv sein) → „Create new app“. Das Formular fragt nacheinander:</p>
+  <ul style="padding-left:20px">
+    <li><b>Name und Beschreibung:</b> frei wählbar, z. B. „Meine Uhr“.</li>
+    <li><b>Purpose of usage</b> (Zweck): z. B. „Personal use: control my own vehicle from my watch“.</li>
+    <li><b>OAuth Grant Type:</b> unbedingt <b>„Authorization Code and Machine-to-Machine“</b> wählen – sonst kann die Uhr deine Domain nicht bei Tesla registrieren.</li>
+  </ul>
+  <p>Danach diese Werte antippen zum Kopieren:</p>
   <label>Allowed Origin(s)</label>
   <div class="copyable"><input id="origin" placeholder="https://name.github.io" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"><button data-copy="origin">Kopieren</button></div>
   <p class="muted" style="margin-top:-6px">Vorbelegt mit deiner GitHub-Pages-Adresse. Liegt der Key woanders (z. B. eigene Domain), hier ändern – genau diese Adresse bekommt auch die Uhr.</p>
@@ -92,11 +110,11 @@
   <label>Scopes (ankreuzen)</label>
   <p style="margin:4px 0 0">Vehicle Information · Vehicle Commands · Vehicle Charging Management</p>
   <p class="muted" style="margin:2px 0 0">(vehicle_device_data, vehicle_cmds, vehicle_charging_cmds)</p>
-  <p class="muted">Unter „Billing“ eine Zahlungsmethode hinterlegen (Tesla schenkt 10 $ Guthaben pro Monat, das reicht privat locker). Danach Client ID und Client Secret kopieren.</p>
+  <p class="muted">Unter „Billing“ eine Zahlungsmethode hinterlegen – ohne sie schaltet Tesla die App ab. Tesla schreibt 10 $ pro Monat gut; nur was darüber hinausgeht, wird abgebucht. Setze dort zur Sicherheit ein Ausgabenlimit. Danach Client ID und Client Secret kopieren.</p>
   <a class="btn" href="https://developer.tesla.com/dashboard" target="_blank" rel="noopener">developer.tesla.com öffnen</a>
 </div>
 
-<h2>3. Zugangsdaten an die Uhr senden</h2>
+<h2>Handy-Einrichtung 3/3 · Zugangsdaten an die Uhr senden</h2>
 <div class="card">
   <label>Client ID</label>
   <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off" spellcheck="false">
@@ -118,7 +136,7 @@
     <li>Hier öffnet sich der <b>Tesla-Login</b>: anmelden und „Zulassen“ wählen. Erst das verbindet die Uhr mit deinem Konto – die Anmeldung bei developer.tesla.com zählt dafür nicht.</li>
     <li>Danach öffnet sich die <b>Tesla-App</b>: Auto wählen und die Uhr als Schlüssel bestätigen. Ohne das lehnt das Auto jeden Befehl ab.</li>
   </ol>
-  <p class="muted">Öffnet sich nichts? Auf der Uhr unter Einstellungen → Cloud steht oben immer der nächste Schritt.</p>
+  <p class="muted">Öffnet sich nichts? Auf der Uhr unter Einstellungen → Cloud (Fernzugriff) steht oben immer der nächste Schritt.</p>
 </div>
 
 <script>
@@ -131,7 +149,7 @@
   const redirect = /^https:\/\/wear\.googleapis(-cn)?\.com\/3p_auth\/[A-Za-z0-9_.]+$/.test(rawRedirect) ? rawRedirect : '';
   const state = q.get('state') || '';
   const pkB64 = q.get('pk') || '';
-  const pkg = q.get('pkg') || 'de.gebhard.teslawatch';
+  const pkg = q.get('pkg') || 'com.hexwerk.teslawatch';
   const KEY_PATH = '.well-known/appspecific/com.tesla.3p.public-key.pem';
 
   $('redirectPreview').textContent = 'https://wear.googleapis.com/3p_auth/' + pkg;
@@ -238,13 +256,13 @@
     $('rdSummary').textContent = '· ' + region.options[region.selectedIndex].text;
 
     const next = $('next'), hint = $('hint');
-    $('status').hidden = next.hidden = hint.hidden = !u || !pem;
-    $('h1').innerHTML = '1. Public Key deiner Uhr veröffentlichen' + (st.online ? ' <span class="done">✓</span>' : '');
+    $('status').hidden = $('glossary').hidden = next.hidden = hint.hidden = !u || !pem;
+    $('h1').innerHTML = 'Handy-Einrichtung 1/3 · Public Key deiner Uhr veröffentlichen' + (st.online ? ' <span class="done">✓</span>' : '');
     validate();
     if (!u || !pem) return;
 
     if (st.noUser) {
-      $('status').hidden = next.hidden = true;
+      $('status').hidden = $('glossary').hidden = next.hidden = true;
       hint.className = 'warn';
       hint.textContent = 'Den GitHub-Benutzer „' + u + '“ gibt es nicht. Trage deinen eigenen Benutzernamen ein – er steht auf github.com oben rechts im Menü. ' +
         'Ein ausgedachter Name funktioniert nicht, weil GitHub nur für den echten Benutzernamen eine Adresse „name.github.io“ vergibt.';
@@ -253,21 +271,23 @@
     hint.className = 'muted';
     // Don't offer to create anything before the account name is confirmed.
     if (!st.userOk && !st.limited && !st.online) {
-      $('status').hidden = next.hidden = true;
+      $('status').hidden = $('glossary').hidden = next.hidden = true;
       hint.textContent = 'Prüfe den GitHub-Benutzer „' + u + '“ …';
       return;
     }
 
     const base = 'https://github.com/' + u + '/' + dom;
     const newFile = (name, value) => base + '/new/' + encodeURIComponent(st.branch || 'main') + '?filename=' + encodeURIComponent(name) + '&value=' + encodeURIComponent(value);
+    // GitHub saves in two taps: "Commit changes…" opens a dialog with its own "Commit changes" button.
+    const commitHint = 'Alles ist ausgefüllt – auf „Commit changes…“ tippen, im Fenster danach nochmal auf „Commit changes“, dann hierher zurückkommen.';
     const steps = [
       { id: 'stRepo', done: st.repo, label: 'Repository anlegen', href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Watch for Tesla)'),
         hint: 'GitHub öffnet sich fertig ausgefüllt – nur unten auf „Create repository“ tippen und hierher zurückkommen.' },
       { id: 'stNoJekyll', done: st.nojekyll, label: 'Datei „.nojekyll“ anlegen', href: newFile('.nojekyll', ' '),
-        hint: 'Alles ist ausgefüllt – nur auf „Commit changes“ tippen und zurückkommen.' },
+        hint: commitHint },
       { id: 'stKey', done: st.key === 'ok', label: st.key === 'other' ? 'Alten Key ersetzen (neuer Key wird kopiert)' : 'Public Key anlegen',
         href: st.key === 'other' ? base + '/edit/' + encodeURIComponent(st.branch || 'main') + '/' + KEY_PATH : newFile(KEY_PATH, pem),
-        hint: st.key === 'other' ? 'Im Repository liegt der Key eines anderen Geräts. Inhalt komplett markieren, den kopierten Key einfügen, „Commit changes“.' : 'Alles ist ausgefüllt – nur auf „Commit changes“ tippen und zurückkommen.' },
+        hint: st.key === 'other' ? 'Im Repository liegt der Key eines anderen Geräts. Inhalt komplett markieren, den kopierten Key einfügen, dann „Commit changes…“ und im Fenster nochmal „Commit changes“ tippen.' : commitHint },
     ];
     const current = steps.find(s => !s.done);
     steps.forEach(s => setRow(s.id, s.done ? 'ok' : s === current ? 'now' : ''));
@@ -279,7 +299,7 @@
       next.href = current.href;
       hint.textContent = current.hint + (st.limited ? ' (GitHub lässt gerade keine Statusabfrage zu – einfach die Schritte nacheinander antippen.)' : '');
     } else if (st.online) {
-      hint.innerHTML = '<span class="ok">Fertig – der Key ist unter ' + dom + ' erreichbar.</span> Weiter mit Schritt 2.';
+      hint.innerHTML = '<span class="ok">Fertig – der Key ist unter ' + dom + ' erreichbar.</span> Weiter mit Teil 2/3.';
     } else {
       hint.textContent = 'GitHub veröffentlicht den Key gerade. Das dauert 1–2 Minuten, die Seite prüft automatisch weiter.';
     }
@@ -393,7 +413,7 @@
     if (!warn.hidden) {
       warn.textContent = domain() !== user() + '.github.io'
         ? 'Der Schlüssel deiner Uhr ist unter ' + domain() + ' nicht abrufbar. Sonst lehnt Tesla die Registrierung ab.'
-        : 'Schritt 1 ist noch offen: ' + (
+        : 'Teil 1/3 ist noch offen: ' + (
         st.key === 'other' ? 'Unter ' + domain() + ' liegt der Schlüssel eines anderen Geräts. Oben auf „Alten Key ersetzen“ tippen.'
         : !st.repo ? 'Das Repository ' + domain() + ' gibt es noch nicht.'
         : !st.nojekyll ? 'Die Datei .nojekyll fehlt, ohne sie versteckt GitHub den Schlüssel.'

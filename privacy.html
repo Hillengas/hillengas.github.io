@@ -13,37 +13,49 @@
 </head>
 <body>
 <h1>Datenschutzerklärung „Watch for Tesla“</h1>
-<p>Stand: September 2026 · Verantwortlich: Alexander Gebhard · Kontakt: <a href="mailto:projektttinfo@gmail.com">projektttinfo@gmail.com</a> oder über das GitHub-Repository <a href="https://github.com/Hillengas/TeslaWatchApp">Hillengas/TeslaWatchApp</a></p>
+<p>Stand: Oktober 2026 · Verantwortlich: Alexander Gebhard · Kontakt: <a href="mailto:projektttinfo@gmail.com">projektttinfo@gmail.com</a></p>
+<p>In der App findest du diese Erklärung unter „Einstellungen → Datenschutz“.</p>
 
 <h2>Kurzfassung</h2>
 <ul>
-  <li>Die App sammelt keine personenbezogenen Daten und sendet von sich aus nichts an den Entwickler oder an Dritte. Nur wenn du selbst Feedback abschickst, geht dieses an den Entwickler (siehe unten).</li>
-  <li>Alle Einstellungen (Fahrgestellnummer, Bluetooth-Adresse, Schlüssel, Zugangsdaten) werden ausschließlich auf der Uhr gespeichert.</li>
-  <li>Es gibt keine Werbung, kein Tracking, keine Analyse-Dienste.</li>
+  <li>Die App sendet von sich aus nichts an den Entwickler. Beim Entwickler landet nur Feedback, das du freiwillig selbst abschickst (siehe „Feedback“).</li>
+  <li>Alle Einstellungen (Fahrgestellnummer, Bluetooth-Adresse, Schlüssel, Zugangsdaten) werden ausschließlich auf der Uhr gespeichert und nicht gesichert oder auf andere Geräte übertragen.</li>
+  <li>Ohne Cloud-Verbindung spricht die App nur per Bluetooth mit deinem Auto. Mit der optionalen Cloud-Verbindung spricht sie zusätzlich mit Tesla, über dein eigenes Konto.</li>
+  <li>Keine Werbung, kein Tracking, keine Analyse-Dienste.</li>
 </ul>
 
 <h2>Bluetooth</h2>
 <p>Die App verbindet sich per Bluetooth Low Energy direkt mit deinem Fahrzeug, um Befehle zu senden und den Fahrzeugstatus zu lesen. Dafür wird ein kryptografischer Schlüssel auf der Uhr erzeugt und im Fahrzeug hinterlegt. Die Berechtigungen „Geräte in der Nähe“ und „Standort“ sind technisch nötig, damit Android Bluetooth-Geräte finden darf; die App ermittelt oder speichert keinen Standort.</p>
 
+<h2>Fahrzeugbild</h2>
+<p>Die App zeigt dein Fahrzeug als eigene, in der App enthaltene Grafik. Sie lädt keine Fahrzeugbilder von Tesla oder anderen Servern.</p>
+
 <h2>Optionale Cloud-Verbindung</h2>
-<p>Wenn du die Cloud-Steuerung einrichtest, kommuniziert die App mit den Servern von Tesla (Fleet API) über dein eigenes Tesla-Developer-Konto. Deine Zugangsdaten und Tokens bleiben auf der Uhr. Für die Verarbeitung durch Tesla gilt die Datenschutzerklärung von Tesla. Zum Anzeigen eines Fahrzeugbilds kann die App ein Bild von Teslas öffentlichem Bild-Dienst laden; dabei werden nur Modell und Farbe übermittelt.</p>
+<p>Wenn du die Cloud-Steuerung einrichtest, kommuniziert die App mit den Servern von Tesla (Fleet API) über dein eigenes Tesla-Developer-Konto. Dabei gehen die Fahrgestellnummer, deine Befehle und die Abfrage des Fahrzeugstatus (Akku, Laden, Klima, Schloss) an Tesla; Standortdaten des Fahrzeugs fragt die App nicht ab. Deine Zugangsdaten und Tokens bleiben auf der Uhr. Bei der Anmeldung schickt Tesla den einmaligen Anmeldecode über den Wear-OS-Dienst von Google (wear.googleapis.com) an deine Uhr zurück; dafür gilt die Datenschutzerklärung von Google. Für die Verarbeitung durch Tesla gilt die Datenschutzerklärung von Tesla.</p>
 
 <h2>Einrichtungsseite für die Cloud-Verbindung</h2>
-<p>Die Cloud-Einrichtung öffnet eine Seite im Browser deines Handys (gehostet bei GitHub Pages; es gilt die Datenschutzerklärung von GitHub, das wie jeder Webserver deine IP-Adresse sieht). Die Seite hat keinen eigenen Server und speichert nichts beim Entwickler. Der öffentliche Schlüssel deiner Uhr wird in <em>deinem</em> GitHub-Konto veröffentlicht, weil Tesla das verlangt; er ist nicht geheim. Client-ID und Client-Secret, die du dort einträgst, werden ausschließlich über den Wear-OS-Kanal von Google an deine Uhr übergeben. Ein optional eingegebener GitHub-Token bleibt im Browser-Tab und geht nur an api.github.com.</p>
+<p>Die Cloud-Einrichtung öffnet eine Seite im Browser deines Handys (gehostet bei GitHub Pages; es gilt die Datenschutzerklärung von GitHub, das wie jeder Webserver deine IP-Adresse sieht). Die Seite hat keinen eigenen Server und speichert nichts beim Entwickler. Der öffentliche Schlüssel deiner Uhr wird in <em>deinem</em> GitHub-Konto veröffentlicht, weil Tesla das verlangt; er ist nicht geheim, mit ihm kann niemand dein Auto steuern. Client-ID und Client-Secret, die du dort einträgst, werden ausschließlich über den Wear-OS-Dienst von Google an deine Uhr übergeben. Ein optional eingegebener GitHub-Token bleibt im Browser-Tab und geht nur an api.github.com.</p>
 
 <h2>Feedback (freiwillig)</h2>
-<p>Unter „Einstellungen → Feedback“ kannst du ein Formular öffnen (auf dem Handy oder per QR-Code). Das Formular wird von Google Forms bereitgestellt; es gilt die Datenschutzerklärung von Google. Übermittelt wird nur, was du selbst einträgst, sowie App-Version, Uhrenmodell, Android-Version und Verbindungsart, die die App vorausfüllt und die du ändern kannst. Eine E-Mail-Adresse ist nicht nötig; eine Kontaktangabe ist freiwillig und wird nur für Rückfragen verwendet. Die Antworten sieht ausschließlich der Entwickler; sie werden nach Bearbeitung gelöscht, spätestens nach zwölf Monaten.</p>
+<p>Unter „Einstellungen → Feedback“ kannst du ein Formular öffnen (auf dem Handy oder per QR-Code). Das Formular wird von Google Forms bereitgestellt; es gilt die Datenschutzerklärung von Google. Beim QR-Code öffnet sich zuerst eine kurze Weiterleitungsseite auf GitHub Pages, an die die App-Version, das Uhrenmodell, die Android-Version und die Verbindungsart in der Adresse übergeben werden. Für diese Seite gilt die Datenschutzerklärung von GitHub, das wie jeder Webserver deine IP-Adresse sieht. Die Seite speichert nichts beim Entwickler und leitet sofort zum Formular weiter. Übermittelt wird nur, was du selbst einträgst, sowie App-Version, Uhrenmodell, Android-Version und Verbindungsart, die die App vorausfüllt und die du ändern oder löschen kannst. Eine E-Mail-Adresse ist nicht nötig; eine Kontaktangabe ist freiwillig und wird nur für Rückfragen verwendet. Die Antworten sieht ausschließlich der Entwickler (in seinem Google-Konto); sie werden nach Bearbeitung gelöscht, spätestens nach zwölf Monaten. Rechtsgrundlage ist deine Einwilligung durch das Absenden (Art. 6 Abs. 1 lit. a DSGVO); du kannst sie jederzeit per E-Mail widerrufen.</p>
 
 <h2>Benachrichtigungen</h2>
 <p>Die Funktion „Auto-Entriegeln“ läuft als Hintergrunddienst mit einer dauerhaften Benachrichtigung, wie von Android vorgeschrieben.</p>
 
-<h2>Deine Rechte</h2>
-<p>Da keine Daten beim Entwickler gespeichert werden, gibt es dort nichts zu löschen oder auszukünften. Alle Daten entfernst du durch Deinstallation der App; den Schlüssel der Uhr löschst du im Fahrzeug unter „Steuerung → Schlösser“.</p>
+<h2>Datensicherheit und Speicherdauer</h2>
+<p>Schlüssel, Client-Secret und Tokens liegen nur im privaten Speicher der App auf der Uhr, auf den andere Apps nicht zugreifen können. Sie sind von Android-Sicherungen und von der Übertragung auf ein neues Gerät ausgeschlossen. Mit dem Auto spricht die App über eine Ende-zu-Ende-verschlüsselte Sitzung nach Teslas Protokoll, mit Tesla, Google und GitHub nur über HTTPS. Die Daten auf der Uhr bleiben gespeichert, bis du sie in der App änderst oder die App deinstallierst. Feedback-Antworten werden spätestens nach zwölf Monaten gelöscht.</p>
 
-<h2>Marken und Bilder</h2>
-<p>„Watch for Tesla“ ist ein unabhängiges Projekt und steht in keiner Verbindung zu Tesla, Inc. Tesla und die Modellnamen sind Marken von Tesla, Inc. Die in der App gezeigten Fahrzeugbilder stammen von Tesla; alle Rechte daran liegen bei Tesla, Inc. Sie dienen nur dazu, das eigene Fahrzeug darzustellen.</p>
+<h2>Deine Rechte</h2>
+<p>Beim Entwickler liegen nur Feedback-Antworten, die du freiwillig abgeschickt hast. Dazu hast du nach der DSGVO das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch; eine E-Mail an <a href="mailto:projektttinfo@gmail.com">projektttinfo@gmail.com</a> genügt. Du hast außerdem das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren.</p>
+<p>Alle Daten auf der Uhr entfernst du durch Deinstallation der App. Den Schlüssel der Uhr löschst du im Fahrzeug unter „Steuerung → Schlösser“. Hast du die Cloud eingerichtet, kannst du außerdem den Zugriff der App in deinem Tesla-Konto widerrufen und die Developer-App auf developer.tesla.com löschen. Einen bei der Einrichtung erzeugten GitHub-Token löschst du unter github.com/settings/tokens. Den öffentlichen Schlüssel entfernst du aus deinem Repository „name.github.io“; das ganze Repository löschst du nur, wenn du es eigens für diese App angelegt hast.</p>
+
+<h2>Marken</h2>
+<p>„Watch for Tesla“ ist ein unabhängiges Projekt und steht in keiner Verbindung zu Tesla, Inc. Tesla und die Modellnamen sind Marken von Tesla, Inc.</p>
+
+<h2>Änderungen</h2>
+<p>Ändert sich die App so, dass diese Erklärung nicht mehr stimmt, wird sie hier angepasst; maßgeblich ist der Stand oben.</p>
 
 <h2 class="en">English summary</h2>
-<p class="en">Watch for Tesla does not collect, store or share any personal data. Everything (VIN, keys, credentials) stays on the watch. Bluetooth and location permissions are required by Android for device discovery only. If you configure the optional cloud connection, the app talks to Tesla's servers with your own developer account; Tesla's privacy policy applies. No ads, no tracking. The cloud setup page runs in your phone's browser on GitHub Pages, has no backend, and hands the credentials you enter only to your watch. The optional feedback form (Settings → Feedback) is a Google Form; only what you type plus app version and watch model are submitted, no e-mail required.</p>
+<p class="en">Watch for Tesla sends nothing to the developer on its own. Everything you set up (VIN, keys, credentials, tokens) stays in the app's private storage on the watch and is excluded from backups and device transfers. Bluetooth and location permissions are required by Android for device discovery only; the app does not determine or store your location. The app shows its own built-in vehicle graphic and downloads no pictures from Tesla. If you set up the optional cloud connection, the app talks to Tesla's Fleet API with your own developer account: your VIN, commands and status requests go to Tesla (Tesla's privacy policy applies), and the one-time login code is passed back to the watch through Google's Wear OS relay (wear.googleapis.com). The cloud setup page runs in your phone's browser on GitHub Pages, has no backend, and hands the credentials you enter only to your watch. The only data the developer receives is optional feedback you choose to send via a Google Form (Settings → Feedback; when you use the QR code, your phone first opens a short redirect page on GitHub Pages that receives these prefilled values in its URL – GitHub, as host, sees your IP address – and forwards you to the form): what you type, an optional contact, and the prefilled, editable app version, watch model, Android version and connection mode. Feedback is deleted after it has been handled, at the latest after 12 months. No ads, no tracking, no analytics. For access, correction or deletion, e-mail projektttinfo@gmail.com; you may also complain to a data protection authority. "Watch for Tesla" is an independent project, not affiliated with Tesla, Inc.</p>
 </body>
 </html>
