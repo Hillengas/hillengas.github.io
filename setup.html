@@ -22,6 +22,7 @@
   .muted { color: #9a9a9e; font-size: 13px; }
   .ok { color: #34c759; }
   .warn { color: #ffb020; }
+  .note { border-left: 3px solid #ffb020; padding-left: 10px; font-size: 14px; }
   ul.status { list-style: none; padding: 0; margin: 12px 0 0; }
   ul.status li { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; color: #9a9a9e; }
   ul.status li::before { content: "○"; width: 16px; text-align: center; flex: none; }
@@ -93,8 +94,9 @@
   </details>
 </div>
 
-<h2>Handy-Einrichtung 2/3 · Tesla-Developer-App anlegen</h2>
+<h2>Handy-Einrichtung 2/3 · Tesla-Developer-App anlegen oder prüfen</h2>
 <div class="card">
+  <p class="note">Du hast schon eine App bei developer.tesla.com? Dann nimm sie weiter, eine zweite brauchst du nicht. Öffne sie und prüfe die Angaben unten. Hast du mehrere Apps, zählt nur die, deren Client ID du in Teil 3/3 einträgst.</p>
   <p>Auf developer.tesla.com mit deinem Tesla-Konto anmelden (2-Faktor-Anmeldung muss aktiv sein) → „Create new app“. Das Formular fragt nacheinander:</p>
   <ul style="padding-left:20px">
     <li><b>Name und Beschreibung:</b> frei wählbar, z. B. „Meine Uhr“.</li>
@@ -107,6 +109,7 @@
   <p class="muted" style="margin-top:-6px">Vorbelegt mit deiner GitHub-Pages-Adresse. Liegt der Key woanders (z. B. eigene Domain), hier ändern. Genau diese Adresse bekommt auch die Uhr.</p>
   <label>Allowed Redirect URI(s)</label>
   <div class="copyable"><code id="redirectPreview"></code><button data-copy="redirectPreview">Kopieren</button></div>
+  <p class="note">Diese Adresse muss genau so in der App stehen. Mehrere Redirect URIs in einer App sind erlaubt, eine alte kann also bleiben. Fehlt sie, zeigt Tesla beim Login nur „redirect_uri … is not registered“ und die Uhr wartet vergeblich.</p>
   <label>Scopes (ankreuzen)</label>
   <p style="margin:4px 0 0">Vehicle Information · Vehicle Commands · Vehicle Charging Management</p>
   <p class="muted" style="margin:2px 0 0">(vehicle_device_data, vehicle_cmds, vehicle_charging_cmds)</p>
@@ -116,10 +119,12 @@
 
 <h2>Handy-Einrichtung 3/3 · Zugangsdaten an die Uhr senden</h2>
 <div class="card">
+  <p id="haveBox" class="muted" hidden></p>
   <label>Client ID</label>
-  <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
+  <p id="idWarn" class="warn" hidden></p>
   <label>Client Secret</label>
-  <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
   <details>
     <summary>Region <span id="rdSummary" class="muted"></span></summary>
     <select id="region" style="margin-top:8px">
@@ -129,13 +134,16 @@
     </select>
   </details>
   <p id="sendWarn" class="warn" hidden></p>
+  <p id="sentWarn" class="warn" hidden>Von dieser Seite wurde schon gesendet. Ob die Daten angekommen sind, zeigt die Uhr (Einstellungen → Cloud (Fernzugriff)). Passiert bei „Allow“ nichts, wartet die Uhr nicht mehr auf diese Seite. Dann auf der Uhr „1. Handy-Einrichtung“ tippen, das öffnet diese Seite neu. Wartet die Uhr noch, dort zuerst „Abbrechen“ tippen.</p>
   <button id="send" class="primary" disabled>An die Uhr senden</button>
   <p class="muted"><b>Damit bist du noch nicht fertig.</b> Nach dem Senden geht es auf diesem Handy von selbst weiter, bitte dranbleiben:</p>
   <ol class="muted" style="margin:4px 0 0;padding-left:20px">
+    <li>Es erscheint eine Seite von Google: „Allow this app …“. Dort einmal auf <b>ALLOW</b> tippen. Erst dann hat die Uhr die Daten.</li>
     <li>Die Uhr registriert deine Domain bei Tesla (ein paar Sekunden).</li>
-    <li>Hier öffnet sich der <b>Tesla-Login</b>: anmelden und „Zulassen“ wählen. Erst das verbindet die Uhr mit deinem Konto. Die Anmeldung bei developer.tesla.com zählt dafür nicht.</li>
+    <li>Hier öffnet sich der <b>Tesla-Login</b>: anmelden und „Zulassen“ wählen, danach nochmal ALLOW bei Google. Erst das verbindet die Uhr mit deinem Konto. Die Anmeldung bei developer.tesla.com zählt dafür nicht.</li>
     <li>Danach öffnet sich die <b>Tesla-App</b>: Auto wählen und die Uhr als Schlüssel bestätigen. Ohne das lehnt das Auto jeden Befehl ab.</li>
   </ol>
+  <p class="note">Zeigt Tesla statt des Logins nur „redirect_uri … is not registered“? Dann fehlt die Redirect URI aus Teil 2/3 in der Tesla-App, deren Client ID du gesendet hast. Dort nachtragen, auf der Uhr „Abbrechen“ und dann „Bei Tesla anmelden“ tippen. Gibt es „Abbrechen“ auf deiner Uhr nicht: die Watch-App in der Liste der zuletzt genutzten Apps wegwischen (die Krone allein reicht nicht) und neu öffnen.</p>
   <p class="muted">Öffnet sich nichts? Auf der Uhr unter Einstellungen → Cloud (Fernzugriff) steht oben immer der nächste Schritt.</p>
 </div>
 
@@ -150,9 +158,18 @@
   const state = q.get('state') || '';
   const pkB64 = q.get('pk') || '';
   const pkg = q.get('pkg') || 'com.hexwerk.teslawatch';
+  // What the watch already holds (start of its Client ID, its domain). Shown as text only, so both are checked first.
+  const haveId = /^[A-Za-z0-9-]{1,8}$/.test(q.get('cid') || '') ? q.get('cid') : '';
+  const haveDomain = /^[a-z0-9.-]{1,100}$/.test(q.get('dom') || '') ? q.get('dom') : '';
   const KEY_PATH = '.well-known/appspecific/com.tesla.3p.public-key.pem';
 
-  $('redirectPreview').textContent = 'https://wear.googleapis.com/3p_auth/' + pkg;
+  // The address the watch really uses when it is known (it differs on Chinese devices).
+  $('redirectPreview').textContent = redirect || 'https://wear.googleapis.com/3p_auth/' + pkg;
+  if (haveId) {
+    $('haveBox').textContent = 'Deine Uhr hat schon Zugangsdaten: Client ID ' + haveId + '…' + (haveDomain ? ', Domain ' + haveDomain : '') +
+      '. Senden ersetzt sie. Danach meldet sich die Uhr neu bei Tesla an.';
+    $('haveBox').hidden = false;
+  }
   if (!redirect) $('nowatch').hidden = false;
 
   let pem = '';
@@ -408,6 +425,14 @@
   const fields = ['origin', 'clientId', 'clientSecret'].map($);
   function validate() {
     send.disabled = !redirect || !domain() || fields.some(f => !f.value.trim());
+    // Two developer apps is the usual way to end up with a Client ID whose redirect URI is missing.
+    const typedId = $('clientId').value.trim().toLowerCase();
+    const idWarn = $('idWarn');
+    idWarn.hidden = !haveId || typedId.length < 8 || typedId.startsWith(haveId.toLowerCase());
+    if (!idWarn.hidden) {
+      idWarn.textContent = 'Das ist eine andere Client ID als die auf deiner Uhr (' + haveId + '…). Hast du zwei Apps bei developer.tesla.com? ' +
+        'Die Redirect URI aus Teil 2/3 muss in der App stehen, deren Client ID du hier einträgst.';
+    }
     const warn = $('sendWarn');
     warn.hidden = send.disabled || st.online || !user();
     if (!warn.hidden) {
@@ -441,6 +466,13 @@
   ghuser.value = store.get('ghuser');
   $('clientId').value = store.get('clientId');
   originInput.value = store.get('origin');
+  // Opened again from a watch that is already set up: a new tab has nothing stored, and without a domain
+  // the send button would stay disabled with no reason shown. Not after a reload with a stored name: the origin follows that.
+  if (!originInput.value && !ghuser.value && haveDomain) {
+    originInput.value = 'https://' + haveDomain;
+    const m = /^([a-z\d-]+)\.github\.io$/.exec(haveDomain);
+    if (m) ghuser.value = m[1];
+  }
   // A restored origin that still matches the username keeps following it.
   if (originInput.value && originInput.value === 'https://' + user() + '.github.io') autoOrigin = originInput.value;
   let tz = '';
@@ -448,6 +480,20 @@
   region.value = store.get('region') || (/^(Asia\/(Shanghai|Chongqing|Harbin|Urumqi))$/.test(tz) ? 'cn' : /^(America|Pacific\/Honolulu|US|Canada)/.test(tz) ? 'na' : 'eu');
   render();
   check(true);
+
+  // The watch takes one answer per opening of this page. Once it has one (or stopped waiting), a second send ends
+  // on Google's page with a dead ALLOW button. The page cannot tell whether the first send arrived.
+  function showSent() {
+    const sent = !!state && store.get('sent') === state;
+    $('sentWarn').hidden = !sent;
+    send.textContent = sent ? 'Trotzdem nochmal senden' : 'An die Uhr senden';
+  }
+  showSent();
+  // "Back" restores the page without running this script again.
+  window.addEventListener('pageshow', e => {
+    if (e.persisted) { $('clientSecret').value = ''; validate(); }
+    showSent();
+  });
 
   send.addEventListener('click', () => {
     const data = {
@@ -457,6 +503,7 @@
       clientSecret: $('clientSecret').value.trim(),
     };
     const code = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    store.set('sent', state);   // only the state, never the secret
     location.href = redirect + '?code=' + encodeURIComponent(code) + '&state=' + encodeURIComponent(state);
   });
 })();
