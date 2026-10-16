@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch for Tesla: Vertrauen</title>
+<meta name="description" content="Was die App mit deinem Schlüssel und deinen Daten macht, belegt mit Auszügen aus dem Quelltext.">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px 16px 48px; max-width: 720px; margin-inline: auto; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.5; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 17px; margin: 32px 0 6px; color: #e82127; }
+  p, li { font-size: 15px; color: #d0d0d4; }
+  a { color: #8ab4ff; }
+  .muted { color: #9a9a9e; font-size: 13px; }
+  .file { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: #9a9a9e; margin: 14px 0 4px; }
+  pre { margin: 0 0 10px; padding: 12px; background: #111; border: 1px solid #2c2c2e; border-radius: 10px; overflow-x: auto; font-size: 12px; line-height: 1.45; color: #ddd; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  th, td { text-align: left; vertical-align: top; font-size: 14px; padding: 8px 8px 8px 0; border-bottom: 1px solid #2c2c2e; color: #d0d0d4; }
+  th { color: #9a9a9e; font-weight: 600; font-size: 13px; }
+  td:first-child { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+  .back { font-size: 14px; }
+</style>
+</head>
+<body>
+<p class="back"><a href="index.html">← Watch for Tesla</a></p>
+<h1>Vertrauen, mit Belegen</h1>
+<p>Du sollst nicht glauben müssen, was in der Datenschutzerklärung steht. Deshalb steht hier zu jeder Zusage die Stelle im Quelltext, die sie umsetzt. Es sind nur kurze Auszüge (Stand: Version 1.0.15), nicht die ganze App.</p>
+
+<h2>1. Der Schlüssel zu deinem Auto bleibt auf der Uhr</h2>
+<p>Beim ersten Start erzeugt die Uhr ein eigenes Schlüsselpaar direkt im Android Keystore, dem Sicherheitsspeicher des Systems. Der private Teil kann dort nur benutzt werden, um etwas zu berechnen. Die App kann ihn nicht auslesen, und der Schlüssel ist nur für den Schlüsselaustausch freigegeben, nicht zum Signieren oder Verschlüsseln. Verlassen darf die Uhr nur der öffentliche Teil.</p>
+<div class="file">crypto/KeyVault.kt</div>
+<pre><code>fun generate(): VehicleKey {
+    val generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, PROVIDER)
+    generator.initialize(
+        KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_AGREE_KEY)
+            .setAlgorithmParameterSpec(ECGenParameterSpec("secp256r1"))
+            .build()
+    )
+    generator.generateKeyPair()
+    return load() ?: throw KeyStoreException("Erzeugter Schlüssel fehlt")
+}</code></pre>
+<p class="muted">PROVIDER ist "AndroidKeyStore". Je nach Uhr liegt der Schlüssel in einer abgesicherten Hardware (TEE oder StrongBox). Kann eine Uhr das nicht, speichert die App ihn ersatzweise im privaten App-Speicher, auf den andere Apps keinen Zugriff haben. In den Einstellungen der App steht, wo dein Schlüssel liegt.</p>
+
+<h2>2. Zugangsdaten werden verschlüsselt abgelegt</h2>
+<p>Tokens und das Client-Secret der optionalen Cloud-Verbindung werden mit einem AES-Schlüssel verschlüsselt, der ebenfalls im Keystore liegt. Ein Abzug des App-Speichers allein verrät sie also nicht.</p>
+<div class="file">crypto/SecretBox.kt</div>
+<pre><code>fun seal(plain: String): String? = runCatching {
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.ENCRYPT_MODE, sealingKey() ?: return null)
+    val sealed = PREFIX + Base64.getEncoder().encodeToString(cipher.iv + cipher.doFinal(plain.toByteArray()))
+    sealed.takeIf { open(it) == plain }
+}.getOrNull()</code></pre>
+
+<h2>3. Nichts wird gesichert oder auf andere Geräte kopiert</h2>
+<p>Die App schaltet die Android-Sicherung ab und schließt ihren gesamten Speicher auch von der Übertragung auf ein neues Gerät aus. Schlüssel und Zugangsdaten gehen also nicht in eine Cloud-Sicherung.</p>
+<div class="file">AndroidManifest.xml und res/xml/data_extraction_rules.xml</div>
+<pre><code>&lt;application android:allowBackup="false"
+             android:dataExtractionRules="@xml/data_extraction_rules" ... &gt;
+
+&lt;cloud-backup&gt;
+    &lt;exclude domain="root" path="." /&gt;
+    &lt;exclude domain="file" path="." /&gt;
+    &lt;exclude domain="database" path="." /&gt;
+    &lt;exclude domain="sharedpref" path="." /&gt;
+&lt;/cloud-backup&gt;
+&lt;device-transfer&gt;
+    (dieselben vier Zeilen)
+&lt;/device-transfer&gt;</code></pre>
+
+<h2>4. Mit wem die App spricht</h2>
+<p>Das sind alle Internetadressen, die im Code vorkommen. Ein Server des Entwicklers ist nicht dabei. Ohne Cloud-Einrichtung und ohne die Option „Tesla-Bilder“ spricht die App nur per Bluetooth mit dem Auto.</p>
+<table>
+  <tr><th>Adresse</th><th>Wofür</th></tr>
+  <tr><td>fleet-api.prd.eu.vn.cloud.tesla.com (und na, cn)</td><td>Steuerung über die Cloud, nur wenn du sie eingerichtet hast</td></tr>
+  <tr><td>auth.tesla.com, fleet-auth.prd.vn.cloud.tesla.com</td><td>Anmeldung bei Tesla für die Cloud, mit deinem eigenen Konto</td></tr>
+  <tr><td>tesla.com/_ak/…</td><td>Öffnet auf dem Handy die Tesla-App, um den Schlüssel im Auto zu bestätigen</td></tr>
+  <tr><td>wear.googleapis.com</td><td>Gibt den Anmeldecode von Tesla an die Uhr zurück (Wear-OS-Dienst von Google)</td></tr>
+  <tr><td>deine-domain/.well-known/…</td><td>Prüft, ob dein öffentlicher Schlüssel auf deiner eigenen Seite liegt (Cloud-Einrichtung)</td></tr>
+  <tr><td>static-assets.tesla.com</td><td>Fahrzeugbild, nur wenn du „Tesla-Bilder“ einschaltest</td></tr>
+</table>
+<p class="muted">Dazu kommt das freiwillige Feedback-Formular (Google Forms), das du selbst öffnest. Details stehen in der <a href="privacy.html">Datenschutzerklärung</a>.</p>
+
+<h2>5. Keine Tracker in der App</h2>
+<p>Die App verwendet nur diese Bausteine: AndroidX, Wear OS und Jetpack Compose für die Oberfläche, die Google Play-Dienste für die Verbindung zwischen Uhr und Handy, OkHttp für Netzwerkzugriffe, Protobuf für Teslas Protokoll, ZXing für QR-Codes sowie Guava und Kotlin Coroutines. Es ist weder ein Werbe-, Analyse- noch ein Absturzmelde-SDK eingebunden.</p>
+<div class="file">app/build.gradle.kts (Auszug)</div>
+<pre><code>implementation("com.squareup.okhttp3:okhttp:4.12.0")
+implementation("com.google.protobuf:protobuf-javalite:4.28.3")
+implementation("com.google.zxing:core:3.5.3")
+implementation("com.google.android.gms:play-services-wearable:18.2.0")</code></pre>
+
+<h2>6. Warum die App welche Berechtigung braucht</h2>
+<table>
+  <tr><th>Berechtigung</th><th>Grund</th></tr>
+  <tr><td>BLUETOOTH_SCAN, BLUETOOTH_CONNECT</td><td>Verbindung zum Auto</td></tr>
+  <tr><td>ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION</td><td>Android verlangt sie für die Bluetooth-Suche. Die App liest und speichert keinen Standort.</td></tr>
+  <tr><td>INTERNET, ACCESS_NETWORK_STATE</td><td>Nur für die Cloud-Option und die Tesla-Bilder</td></tr>
+  <tr><td>FOREGROUND_SERVICE, FOREGROUND_SERVICE_CONNECTED_DEVICE, POST_NOTIFICATIONS</td><td>Auto-Entriegeln läuft als Hintergrunddienst, Android schreibt dafür eine sichtbare Benachrichtigung vor</td></tr>
+  <tr><td>RECEIVE_BOOT_COMPLETED</td><td>Startet das Auto-Entriegeln nach einem Neustart der Uhr wieder</td></tr>
+  <tr><td>WAKE_LOCK, VIBRATE</td><td>Verbindung im Ruhezustand halten, Rückmeldung am Handgelenk</td></tr>
+</table>
+
+<h2>Was hier fehlt</h2>
+<p>Die übrige App (Oberfläche, Bluetooth-Protokoll, Designs) ist nicht öffentlich. Die Auszüge belegen, wie Schlüssel und Daten behandelt werden, ersetzen aber keine unabhängige Prüfung der ganzen App. Du kannst vieles selbst nachsehen: Die Berechtigungen zeigt Android unter Einstellungen, Apps, Watch for Tesla, und den Speicherort deines Schlüssels zeigt die App in ihren Einstellungen.</p>
+<p>Fragen oder Hinweise gern per E-Mail an <a href="mailto:projektttinfo@gmail.com">projektttinfo@gmail.com</a>.</p>
+
+<p class="muted">Die Quelltext-Auszüge stehen zur Ansicht hier. Alle Rechte vorbehalten: Kopieren, Verwenden und Weitergeben sind nicht erlaubt. Die Protokolldefinitionen von Tesla stehen unabhängig davon unter Teslas eigener Lizenz (Apache 2.0).</p>
+</body>
+</html>
