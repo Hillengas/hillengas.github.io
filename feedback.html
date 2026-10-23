@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,19 +16,43 @@
 </style>
 </head>
 <body>
-<h1>Watch for Tesla · Feedback</h1>
-<p>Danke! Du wirst gleich zum Feedback-Formular weitergeleitet. Keine Anmeldung nötig.</p>
+<h1 id="title"></h1>
+<p id="thanks"></p>
 <div class="card">
-  <a id="open" class="btn" href="#">Feedback-Formular öffnen</a>
+  <a id="open" class="btn" href="#"></a>
   <p class="muted" id="info"></p>
 </div>
-<p class="muted">Das Formular wird von Google Forms bereitgestellt. Übermittelt werden nur dein Text, ein optionaler Kontakt und die oben vorausgefüllten Angaben (App-Version, Uhrenmodell, Android-Version, Verbindungsart), die du im Formular ändern kannst; siehe <a href="privacy.html">Datenschutz</a>.</p>
+<p class="muted" id="note"></p>
 <script>
   // Same form as in the app (app/build.gradle.kts: FEEDBACK_FORM_URL). Keep the entry IDs in sync.
   var FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSek6l4aaSDejawnUi7cWVfmWVTP-fF69PJBajOQVD4xPyk_yg/viewform';
   var ENTRIES = { v: 'entry.1210453077', w: 'entry.842004440', os: 'entry.1144378399', c: 'entry.32876464' };
 
+  // The app passes its language as ?lang=; otherwise the browser's. English when there is no translation.
+  var TEXT = {
+    en: { thanks: 'Thanks! You will be forwarded to the feedback form in a moment. No sign-in needed.', open: 'Open feedback form', prefilled: 'Prefilled: ',
+          note: 'The form is provided by Google Forms. Only your text, an optional contact and the details prefilled above (app version, watch model, Android version, connection type), which you can change in the form, are sent; see <a href="privacy.html?lang=en">Privacy</a>.' },
+    de: { thanks: 'Danke! Du wirst gleich zum Feedback-Formular weitergeleitet. Keine Anmeldung nötig.', open: 'Feedback-Formular öffnen', prefilled: 'Vorausgefüllt: ',
+          note: 'Das Formular wird von Google Forms bereitgestellt. Übermittelt werden nur dein Text, ein optionaler Kontakt und die oben vorausgefüllten Angaben (App-Version, Uhrenmodell, Android-Version, Verbindungsart), die du im Formular ändern kannst; siehe <a href="privacy.html?lang=de">Datenschutz</a>.' },
+    fr: { thanks: 'Merci ! Tu vas être redirigé vers le formulaire de retour dans un instant. Aucune connexion nécessaire.', open: 'Ouvrir le formulaire de retour', prefilled: 'Déjà rempli : ',
+          note: 'Le formulaire est fourni par Google Forms. Seuls ton texte, un contact facultatif et les informations préremplies ci-dessus (version de l\'appli, modèle de montre, version d\'Android, type de connexion), que tu peux modifier dans le formulaire, sont transmis ; voir <a href="privacy.html?lang=fr">Confidentialité</a>.' },
+    es: { thanks: '¡Gracias! En un momento te redirigiremos al formulario de opiniones. No hace falta iniciar sesión.', open: 'Abrir el formulario de opiniones', prefilled: 'Ya rellenado: ',
+          note: 'El formulario lo proporciona Google Forms. Solo se envían tu texto, un contacto opcional y los datos rellenados arriba (versión de la app, modelo del reloj, versión de Android, tipo de conexión), que puedes cambiar en el formulario; consulta <a href="privacy.html?lang=es">Privacidad</a>.' },
+    it: { thanks: 'Grazie! Tra un istante verrai reindirizzato al modulo di feedback. Nessun accesso necessario.', open: 'Apri il modulo di feedback', prefilled: 'Già compilato: ',
+          note: 'Il modulo è fornito da Google Forms. Vengono inviati solo il tuo testo, un contatto facoltativo e i dati precompilati qui sopra (versione dell\'app, modello dell\'orologio, versione di Android, tipo di connessione), che puoi modificare nel modulo; vedi <a href="privacy.html?lang=it">Privacy</a>.' },
+    nl: { thanks: 'Bedankt! Je wordt zo doorgestuurd naar het feedbackformulier. Inloggen is niet nodig.', open: 'Feedbackformulier openen', prefilled: 'Vooraf ingevuld: ',
+          note: 'Het formulier wordt aangeboden door Google Forms. Alleen je tekst, een optioneel contact en de hierboven vooraf ingevulde gegevens (app-versie, horlogemodel, Android-versie, verbindingstype), die je in het formulier kunt wijzigen, worden verstuurd; zie <a href="privacy.html?lang=nl">Privacy</a>.' }
+  };
   var q = new URLSearchParams(location.search);
+  function pick(tag) { var l = String(tag || '').toLowerCase().split(/[-_]/)[0]; return TEXT[l] ? l : ''; }
+  var lang = pick(q.get('lang')) || (navigator.languages || [navigator.language]).map(pick).filter(Boolean)[0] || 'en';
+  var t = TEXT[lang];
+  document.documentElement.lang = lang;
+  document.getElementById('title').textContent = 'Watch for Tesla · Feedback';
+  document.getElementById('thanks').textContent = t.thanks;
+  document.getElementById('open').textContent = t.open;
+  document.getElementById('note').innerHTML = t.note;
+
   var params = ['usp=pp_url'];
   var lines = [];
   Object.keys(ENTRIES).forEach(function (k) {
@@ -40,7 +64,7 @@
   });
   var url = FORM + '?' + params.join('&');
   document.getElementById('open').href = url;
-  document.getElementById('info').textContent = lines.length ? 'Vorausgefüllt: ' + lines.join(' · ') : '';
+  document.getElementById('info').textContent = lines.length ? t.prefilled + lines.join(' · ') : '';
   // Forward automatically; the button stays as fallback.
   setTimeout(function () { location.replace(url); }, 600);
 </script>

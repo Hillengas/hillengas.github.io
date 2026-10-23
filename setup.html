@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Watch for Tesla: Cloud-Einrichtung</title>
+<title>Watch for Tesla</title>
 <style>
   :root { color-scheme: dark; }
   body { margin: 0; padding: 20px 16px 40px; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background: #000; color: #fff; line-height: 1.45; }
@@ -41,116 +41,154 @@
 </style>
 </head>
 <body>
-<h1>Watch for Tesla · Cloud-Einrichtung</h1>
-<p class="muted">Optional. Damit steuerst du dein Auto auch über das Internet, mit deinem eigenen Tesla-Developer-Konto. Für Bluetooth in der Nähe des Autos brauchst du das nicht. Alles bleibt bei dir: Diese Seite hat keinen Server, die Daten gehen am Ende nur an deine Uhr.</p>
+
+<script src="setup-i18n.js"></script>
+
+<div class="card" style="margin-top:0">
+  <label for="lang" id="langLabel" style="margin-top:0"></label>
+  <select id="lang">
+    <option value="en">English</option>
+    <option value="de">Deutsch</option>
+    <option value="fr">Français</option>
+    <option value="es">Español</option>
+    <option value="it">Italiano</option>
+    <option value="nl">Nederlands</option>
+  </select>
+</div>
+
+<h1 data-i18n="title"></h1>
+<p class="muted" data-i18n="intro"></p>
 
 <div class="card">
-  <p style="margin:0"><b>Du brauchst:</b></p>
+  <p style="margin:0" data-i18n="need"></p>
   <ul style="margin:6px 0 0;padding-left:20px">
-    <li>ein GitHub-Konto (kostenlos)</li>
-    <li>dein Tesla-Konto mit aktiver 2-Faktor-Anmeldung</li>
-    <li>eine Kreditkarte, die du bei Tesla hinterlegst</li>
+    <li data-i18n="need1"></li>
+    <li data-i18n="need2"></li>
+    <li data-i18n="need3"></li>
   </ul>
-  <p class="muted" style="margin-bottom:0">Tesla schreibt dir 10 $ pro Monat gut; bei normaler privater Nutzung zahlst du meist nichts. Nur was darüber hinausgeht, bucht Tesla von der Karte ab. Dauer: ca. 15 Minuten.</p>
+  <p class="muted" style="margin-bottom:0" data-i18n="needNote"></p>
 </div>
 
 <div id="nowatch" class="card" hidden>
-  <p class="warn">Diese Seite wurde nicht von der Uhr geöffnet. Bitte auf der Uhr <b>Einstellungen → Cloud (Fernzugriff) → Am Handy einrichten</b> antippen, dann öffnet sie sich hier automatisch mit den Daten deiner Uhr.</p>
+  <p class="warn" data-i18n="noWatch"></p>
 </div>
 
-<h2 id="h1">Handy-Einrichtung 1/3 · Public Key deiner Uhr veröffentlichen</h2>
+<h2 id="h1"></h2>
 <div class="card">
-  <p>Tesla verlangt, dass der öffentliche Schlüssel der Uhr unter einer Domain erreichbar ist. Kostenlos geht das mit GitHub Pages. Gib nur deinen Benutzernamen ein, die Seite erkennt selbst, was noch fehlt.</p>
-  <p class="muted">Der öffentliche Schlüssel ist ungefährlich: Mit ihm kann niemand dein Auto öffnen, der geheime Teil bleibt auf der Uhr.</p>
-  <label>Dein GitHub-Benutzername <a href="https://github.com/signup" target="_blank" rel="noopener" class="muted">(noch keiner? Konto anlegen)</a></label>
-  <input id="ghuser" placeholder="z. B. maxmuster" autocapitalize="none" autocorrect="off" spellcheck="false">
-  <p class="muted">Dein echter Benutzername, nicht ausgedacht: GitHub vergibt die Adresse <code>name.github.io</code> nur dafür. Er steht auf github.com oben rechts im Menü.</p>
+  <p data-i18n="p1a"></p>
+  <p class="muted" data-i18n="p1b"></p>
+  <label><span data-i18n="ghLabel"></span> <a href="https://github.com/signup" target="_blank" rel="noopener" class="muted" data-i18n="ghSignup"></a></label>
+  <input id="ghuser" data-i18n-ph="ghPlaceholder" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <p class="muted" data-i18n="p1c"></p>
 
   <ul class="status" id="status" hidden>
-    <li id="stRepo">Repository <code class="dom"></code></li>
-    <li id="stNoJekyll">Datei <code>.nojekyll</code></li>
-    <li id="stKey">Public Key der Uhr</li>
-    <li id="stOnline">Online erreichbar</li>
+    <li id="stRepo"><span data-i18n="stRepo"></span> <code class="dom"></code></li>
+    <li id="stNoJekyll" data-i18n="stNoJekyll"></li>
+    <li id="stKey" data-i18n="stKey"></li>
+    <li id="stOnline" data-i18n="stOnline"></li>
   </ul>
-  <p class="muted" id="glossary" hidden>Repository = Projektordner bei GitHub · .nojekyll = leere Hilfsdatei, damit GitHub den Schlüssel anzeigt.</p>
+  <p class="muted" id="glossary" data-i18n="glossary" hidden></p>
   <a id="next" class="btn primary" href="#" target="_blank" rel="noopener" hidden></a>
   <p id="hint" class="muted" hidden></p>
 
   <details id="autoBox">
-    <summary>Noch schneller: alles automatisch per GitHub-Token</summary>
-    <p class="muted">Ein Tipp erzeugt einen Token, danach legt diese Seite Repository, <code>.nojekyll</code> und Key selbst an. Der Token bleibt in diesem Browser-Tab und geht nur an api.github.com.</p>
-    <a class="btn" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Watch%20for%20Tesla%20Setup" target="_blank" rel="noopener">a) Token erzeugen (unten „Generate token“, dann kopieren)</a>
-    <label>b) Token hier einfügen</label>
+    <summary data-i18n="autoSum"></summary>
+    <p class="muted" data-i18n="autoP"></p>
+    <a class="btn" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Watch%20for%20Tesla%20Setup" target="_blank" rel="noopener" data-i18n="autoA"></a>
+    <label data-i18n="autoB"></label>
     <input id="token" type="password" placeholder="ghp_…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
-    <button id="autoRun" class="primary" disabled>Automatisch einrichten</button>
+    <button id="autoRun" class="primary" data-i18n="autoRun" disabled></button>
     <p id="autoLog" class="muted"></p>
   </details>
 
   <details>
-    <summary>Key woanders hosten (eigene Domain)</summary>
-    <p class="muted">Lege den Key unter <code>/.well-known/appspecific/com.tesla.3p.public-key.pem</code> ab und trage die Adresse in Teil 2/3 unter „Allowed Origin“ ein.</p>
+    <summary data-i18n="hostSum"></summary>
+    <p class="muted" data-i18n="hostP"></p>
     <textarea id="pem" readonly></textarea>
-    <button id="copyPem">Key kopieren</button>
+    <button id="copyPem" data-i18n="copyKey"></button>
   </details>
 </div>
 
-<h2>Handy-Einrichtung 2/3 · Tesla-Developer-App anlegen oder prüfen</h2>
+<h2 data-i18n="h2"></h2>
 <div class="card">
-  <p class="note">Du hast schon eine App bei developer.tesla.com? Dann nimm sie weiter, eine zweite brauchst du nicht. Öffne sie und prüfe die Angaben unten. Hast du mehrere Apps, zählt nur die, deren Client ID du in Teil 3/3 einträgst.</p>
-  <p>Auf developer.tesla.com mit deinem Tesla-Konto anmelden (2-Faktor-Anmeldung muss aktiv sein) → „Create new app“. Das Formular fragt nacheinander:</p>
+  <p class="note" data-i18n="p2note"></p>
+  <p data-i18n="p2intro"></p>
   <ul style="padding-left:20px">
-    <li><b>Name und Beschreibung:</b> frei wählbar, z. B. „Meine Uhr“.</li>
-    <li><b>Purpose of usage</b> (Zweck): z. B. „Personal use: control my own vehicle from my watch“.</li>
-    <li><b>OAuth Grant Type:</b> unbedingt <b>„Authorization Code and Machine-to-Machine“</b> wählen, sonst kann die Uhr deine Domain nicht bei Tesla registrieren.</li>
+    <li data-i18n="p2l1"></li>
+    <li data-i18n="p2l2"></li>
+    <li data-i18n="p2l3"></li>
   </ul>
-  <p>Danach diese Werte antippen zum Kopieren:</p>
-  <label>Allowed Origin(s)</label>
-  <div class="copyable"><input id="origin" placeholder="https://name.github.io" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"><button data-copy="origin">Kopieren</button></div>
-  <p class="muted" style="margin-top:-6px">Vorbelegt mit deiner GitHub-Pages-Adresse. Liegt der Key woanders (z. B. eigene Domain), hier ändern. Genau diese Adresse bekommt auch die Uhr.</p>
-  <label>Allowed Redirect URI(s)</label>
-  <div class="copyable"><code id="redirectPreview"></code><button data-copy="redirectPreview">Kopieren</button></div>
-  <p class="note">Diese Adresse muss genau so in der App stehen. Mehrere Redirect URIs in einer App sind erlaubt, eine alte kann also bleiben. Fehlt sie, zeigt Tesla beim Login nur „redirect_uri … is not registered“ und die Uhr wartet vergeblich.</p>
-  <label>Scopes (ankreuzen)</label>
-  <p style="margin:4px 0 0">Vehicle Information · Vehicle Commands · Vehicle Charging Management</p>
+  <p data-i18n="p2copy"></p>
+  <label data-i18n="originLabel"></label>
+  <div class="copyable"><input id="origin" placeholder="https://name.github.io" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false"><button data-copy="origin" data-i18n="copy"></button></div>
+  <p class="muted" style="margin-top:-6px" data-i18n="originHint"></p>
+  <label data-i18n="redirectLabel"></label>
+  <div class="copyable"><code id="redirectPreview"></code><button data-copy="redirectPreview" data-i18n="copy"></button></div>
+  <p class="note" data-i18n="redirectNote"></p>
+  <label data-i18n="scopesLabel"></label>
+  <p style="margin:4px 0 0" data-i18n="scopesNames"></p>
   <p class="muted" style="margin:2px 0 0">(vehicle_device_data, vehicle_cmds, vehicle_charging_cmds)</p>
-  <p class="muted">Unter „Billing“ eine Zahlungsmethode hinterlegen, ohne sie schaltet Tesla die App ab. Tesla schreibt 10 $ pro Monat gut; nur was darüber hinausgeht, wird abgebucht. Setze dort zur Sicherheit ein Ausgabenlimit. Danach Client ID und Client Secret kopieren.</p>
-  <a class="btn" href="https://developer.tesla.com/dashboard" target="_blank" rel="noopener">developer.tesla.com öffnen</a>
+  <p class="muted" data-i18n="billing"></p>
+  <a class="btn" href="https://developer.tesla.com/dashboard" target="_blank" rel="noopener" data-i18n="openDev"></a>
 </div>
 
-<h2>Handy-Einrichtung 3/3 · Zugangsdaten an die Uhr senden</h2>
+<h2 data-i18n="h3"></h2>
 <div class="card">
   <p id="haveBox" class="muted" hidden></p>
-  <label>Client ID</label>
+  <label data-i18n="clientIdLabel"></label>
   <input id="clientId" placeholder="xxxxxxxx-xxxx-…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
   <p id="idWarn" class="warn" hidden></p>
-  <label>Client Secret</label>
+  <label data-i18n="clientSecretLabel"></label>
   <input id="clientSecret" placeholder="ta-secret.…" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
   <details>
-    <summary>Region <span id="rdSummary" class="muted"></span></summary>
+    <summary><span data-i18n="regionSum"></span> <span id="rdSummary" class="muted"></span></summary>
     <select id="region" style="margin-top:8px">
-      <option value="eu">Europa / Rest der Welt</option>
-      <option value="na">Nordamerika</option>
-      <option value="cn">China</option>
+      <option value="eu" data-i18n="regionEu"></option>
+      <option value="na" data-i18n="regionNa"></option>
+      <option value="cn" data-i18n="regionCn"></option>
     </select>
   </details>
   <p id="sendWarn" class="warn" hidden></p>
-  <p id="sentWarn" class="warn" hidden>Von dieser Seite wurde schon gesendet. Ob die Daten angekommen sind, zeigt die Uhr (Einstellungen → Cloud (Fernzugriff)). Passiert bei „Allow“ nichts, wartet die Uhr nicht mehr auf diese Seite. Dann auf der Uhr „1. Handy-Einrichtung“ tippen, das öffnet diese Seite neu. Wartet die Uhr noch, dort zuerst „Abbrechen“ tippen.</p>
-  <button id="send" class="primary" disabled>An die Uhr senden</button>
-  <p class="muted"><b>Damit bist du noch nicht fertig.</b> Nach dem Senden geht es auf diesem Handy von selbst weiter, bitte dranbleiben:</p>
+  <p id="sentWarn" class="warn" data-i18n="sentWarn" hidden></p>
+  <button id="send" class="primary" disabled></button>
+  <p class="muted" data-i18n="notDone"></p>
   <ol class="muted" style="margin:4px 0 0;padding-left:20px">
-    <li>Es erscheint eine Seite von Google: „Allow this app …“. Dort einmal auf <b>ALLOW</b> tippen. Erst dann hat die Uhr die Daten.</li>
-    <li>Die Uhr registriert deine Domain bei Tesla (ein paar Sekunden).</li>
-    <li>Hier öffnet sich der <b>Tesla-Login</b>: anmelden und „Zulassen“ wählen, danach nochmal ALLOW bei Google. Erst das verbindet die Uhr mit deinem Konto. Die Anmeldung bei developer.tesla.com zählt dafür nicht.</li>
-    <li>Danach öffnet sich die <b>Tesla-App</b>: Auto wählen und die Uhr als Schlüssel bestätigen. Ohne das lehnt das Auto jeden Befehl ab.</li>
+    <li data-i18n="n1"></li>
+    <li data-i18n="n2"></li>
+    <li data-i18n="n3"></li>
+    <li data-i18n="n4"></li>
   </ol>
-  <p class="note">Zeigt Tesla statt des Logins nur „redirect_uri … is not registered“? Dann fehlt die Redirect URI aus Teil 2/3 in der Tesla-App, deren Client ID du gesendet hast. Dort nachtragen, auf der Uhr „Abbrechen“ und dann „Bei Tesla anmelden“ tippen. Gibt es „Abbrechen“ auf deiner Uhr nicht: die Watch-App in der Liste der zuletzt genutzten Apps wegwischen (die Krone allein reicht nicht) und neu öffnen.</p>
-  <p class="muted">Öffnet sich nichts? Auf der Uhr unter Einstellungen → Cloud (Fernzugriff) steht oben immer der nächste Schritt.</p>
+  <p class="note" data-i18n="redirectHelp"></p>
+  <p class="muted" data-i18n="nothingOpens"></p>
 </div>
 
 <script>
 (function () {
   const $ = id => document.getElementById(id);
   const q = new URLSearchParams(location.search);
+
+  // ---- Language ---------------------------------------------------------------------------
+  // The app passes its own language as ?lang=; otherwise the browser's. The selector at the top changes it.
+  const I18N = window.SETUP_I18N;
+  const LANGS = Object.keys(I18N);
+  const pickLang = tag => { const l = String(tag || '').toLowerCase().split(/[-_]/)[0]; return LANGS.includes(l) ? l : ''; };
+  let lang = pickLang(q.get('lang')) || pickLang(sessionStorageGet('tw.lang')) ||
+    (navigator.languages || [navigator.language]).map(pickLang).find(Boolean) || 'en';
+  function sessionStorageGet(k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function t(key, vars) {
+    let s = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+    if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] === undefined ? '' : vars[k]));
+    return s;
+  }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    $('langLabel').textContent = t('language');
+    $('lang').value = lang;
+    document.querySelectorAll('[data-i18n]').forEach(e => { e.innerHTML = t(e.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = t(e.dataset.i18nPh); });
+  }
+
   // The credentials are sent to this address, so only the Wear OS companion endpoint is accepted.
   // A crafted link with another redirect_uri must not be able to collect a client secret.
   const rawRedirect = q.get('redirect_uri') || '';
@@ -165,16 +203,10 @@
 
   // The address the watch really uses when it is known (it differs on Chinese devices).
   $('redirectPreview').textContent = redirect || 'https://wear.googleapis.com/3p_auth/' + pkg;
-  if (haveId) {
-    $('haveBox').textContent = 'Deine Uhr hat schon Zugangsdaten: Client ID ' + haveId + '…' + (haveDomain ? ', Domain ' + haveDomain : '') +
-      '. Senden ersetzt sie. Danach meldet sich die Uhr neu bei Tesla an.';
-    $('haveBox').hidden = false;
-  }
   if (!redirect) $('nowatch').hidden = false;
 
   let pem = '';
   try { pem = decodeURIComponent(escape(atob(pkB64.replace(/-/g, '+').replace(/_/g, '/')))); } catch (e) { pem = ''; }
-  $('pem').value = pem || '(Kein Schlüssel übermittelt. Seite von der Uhr aus öffnen.)';
 
   // Mobile browsers may reload this tab after a trip to GitHub; keep the non-secret fields.
   const store = {
@@ -267,6 +299,11 @@
     const u = user();
     const dom = u ? u + '.github.io' : '';
     document.querySelectorAll('.dom').forEach(e => e.textContent = dom);
+    $('pem').value = pem || t('noKey');
+    if (haveId) {
+      $('haveBox').textContent = t('have', { id: haveId, domain: haveDomain ? t('haveDomain', { dom: haveDomain }) : '' });
+      $('haveBox').hidden = false;
+    }
     // Follow the username until the origin was edited by hand.
     if (dom && (!originInput.value || originInput.value === autoOrigin)) originInput.value = 'https://' + dom;
     if (dom) autoOrigin = 'https://' + dom;
@@ -274,37 +311,36 @@
 
     const next = $('next'), hint = $('hint');
     $('status').hidden = $('glossary').hidden = next.hidden = hint.hidden = !u || !pem;
-    $('h1').innerHTML = 'Handy-Einrichtung 1/3 · Public Key deiner Uhr veröffentlichen' + (st.online ? ' <span class="done">✓</span>' : '');
+    $('h1').innerHTML = t('h1') + (st.online ? ' <span class="done">✓</span>' : '');
     validate();
     if (!u || !pem) return;
 
     if (st.noUser) {
       $('status').hidden = $('glossary').hidden = next.hidden = true;
       hint.className = 'warn';
-      hint.textContent = 'Den GitHub-Benutzer „' + u + '“ gibt es nicht. Trage deinen eigenen Benutzernamen ein, er steht auf github.com oben rechts im Menü. ' +
-        'Ein ausgedachter Name funktioniert nicht, weil GitHub nur für den echten Benutzernamen eine Adresse „name.github.io“ vergibt.';
+      hint.textContent = t('noUser', { u });
       return;
     }
     hint.className = 'muted';
     // Don't offer to create anything before the account name is confirmed.
     if (!st.userOk && !st.limited && !st.online) {
       $('status').hidden = $('glossary').hidden = next.hidden = true;
-      hint.textContent = 'Prüfe den GitHub-Benutzer „' + u + '“ …';
+      hint.textContent = t('checkingUser', { u });
       return;
     }
 
     const base = 'https://github.com/' + u + '/' + dom;
     const newFile = (name, value) => base + '/new/' + encodeURIComponent(st.branch || 'main') + '?filename=' + encodeURIComponent(name) + '&value=' + encodeURIComponent(value);
     // GitHub saves in two taps: "Commit changes…" opens a dialog with its own "Commit changes" button.
-    const commitHint = 'Alles ist ausgefüllt. Auf „Commit changes…“ tippen, im Fenster danach nochmal auf „Commit changes“, dann hierher zurückkommen.';
+    const commitHint = t('commitHint');
     const steps = [
-      { id: 'stRepo', done: st.repo, label: 'Repository anlegen', href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Watch for Tesla)'),
-        hint: 'GitHub öffnet sich fertig ausgefüllt, nur unten auf „Create repository“ tippen und hierher zurückkommen.' },
-      { id: 'stNoJekyll', done: st.nojekyll, label: 'Datei „.nojekyll“ anlegen', href: newFile('.nojekyll', ' '),
+      { id: 'stRepo', done: st.repo, label: t('stepRepo'), href: 'https://github.com/new?name=' + encodeURIComponent(dom) + '&visibility=public&description=' + encodeURIComponent('Tesla Public Key (Watch for Tesla)'),
+        hint: t('repoHint') },
+      { id: 'stNoJekyll', done: st.nojekyll, label: t('stepNoJekyll'), href: newFile('.nojekyll', ' '),
         hint: commitHint },
-      { id: 'stKey', done: st.key === 'ok', label: st.key === 'other' ? 'Alten Key ersetzen (neuer Key wird kopiert)' : 'Public Key anlegen',
+      { id: 'stKey', done: st.key === 'ok', label: st.key === 'other' ? t('stepKeyReplace') : t('stepKeyNew'),
         href: st.key === 'other' ? base + '/edit/' + encodeURIComponent(st.branch || 'main') + '/' + KEY_PATH : newFile(KEY_PATH, pem),
-        hint: st.key === 'other' ? 'Im Repository liegt der Key eines anderen Geräts. Inhalt komplett markieren, den kopierten Key einfügen, dann „Commit changes…“ und im Fenster nochmal „Commit changes“ tippen.' : commitHint },
+        hint: st.key === 'other' ? t('keyOtherHint') : commitHint },
     ];
     const current = steps.find(s => !s.done);
     steps.forEach(s => setRow(s.id, s.done ? 'ok' : s === current ? 'now' : ''));
@@ -314,11 +350,11 @@
     if (current) {
       next.textContent = current.label;
       next.href = current.href;
-      hint.textContent = current.hint + (st.limited ? ' (GitHub lässt gerade keine Statusabfrage zu, einfach die Schritte nacheinander antippen.)' : '');
+      hint.textContent = current.hint + (st.limited ? t('limitedNote') : '');
     } else if (st.online) {
-      hint.innerHTML = '<span class="ok">Fertig: Der Key ist unter ' + dom + ' erreichbar.</span> Weiter mit Teil 2/3.';
+      hint.innerHTML = t('doneHint', { dom });
     } else {
-      hint.textContent = 'GitHub veröffentlicht den Key gerade. Das dauert 1 bis 2 Minuten, die Seite prüft automatisch weiter.';
+      hint.textContent = t('publishing');
     }
   }
 
@@ -373,11 +409,11 @@
 
   autoRun.addEventListener('click', async () => {
     autoRun.disabled = true;
-    const say = t => { autoLog.className = 'muted'; autoLog.textContent = t; };
+    const say = text => { autoLog.className = 'muted'; autoLog.textContent = text; };
     try {
-      say('Melde mich bei GitHub an …');
+      say(t('autoLogin'));
       const me = await gh('/user');
-      if (!me.ok) throw new Error(me.status === 401 ? 'Token ungültig' : 'GitHub antwortet mit ' + me.status);
+      if (!me.ok) throw new Error(me.status === 401 ? t('tokenInvalid') : t('ghAnswers', { status: me.status }));
       const login = (await me.json()).login.toLowerCase();
       ghuser.value = login; store.set('ghuser', login);
       st = {}; checkedFor = login; render();
@@ -385,27 +421,27 @@
 
       const have = await gh(repoPath);
       if (have.status === 404) {
-        say('Lege Repository ' + repo + ' an …');
+        say(t('creatingRepo', { repo }));
         const made = await gh('/user/repos', { method: 'POST', body: { name: repo, description: 'Tesla Public Key (Watch for Tesla)', private: false } });
-        if (!made.ok) throw new Error('Repository: ' + ((await made.json().catch(() => ({}))).message || made.status) + ' (Token braucht den Scope „public_repo“)');
+        if (!made.ok) throw new Error(t('repoError', { msg: (await made.json().catch(() => ({}))).message || made.status }));
       } else if (have.ok && (await have.json()).private) {
-        throw new Error('Das Repository ' + repo + ' ist privat. Bitte auf GitHub öffentlich stellen.');
+        throw new Error(t('repoPrivate', { repo }));
       }
       st.repo = true; render();
-      say('Lege .nojekyll an …');
+      say(t('makingNoJekyll'));
       await putFile(repoPath, '.nojekyll', '\n', 'Add .nojekyll (Watch for Tesla)');
       st.nojekyll = true; render();
-      say('Lege den Public Key an …');
+      say(t('makingKey'));
       await putFile(repoPath, KEY_PATH, pem, 'Add Tesla public key (Watch for Tesla)');
       st.key = 'ok'; render();
       // User sites publish on their own; this only helps when Pages was switched off.
       await gh(repoPath + '/pages', { method: 'POST', body: { source: { branch: 'main', path: '/' } } }).catch(() => {});
       autoLog.className = 'ok';
-      autoLog.innerHTML = 'Erledigt ✓ GitHub veröffentlicht den Key jetzt (1 bis 2 Minuten). Den Token kannst du danach <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">hier wieder löschen</a>.';
+      autoLog.innerHTML = t('autoDone');
       check(false);
     } catch (e) {
       autoLog.className = 'warn';
-      autoLog.textContent = 'Hat nicht geklappt: ' + e.message;
+      autoLog.textContent = t('autoFail', { msg: e.message });
     } finally {
       autoRun.disabled = !token.value.trim();
     }
@@ -414,7 +450,7 @@
   // ---- Copy helpers -----------------------------------------------------------------------
   async function copy(text, btn) {
     const old = btn.textContent;
-    try { await navigator.clipboard.writeText(text); btn.textContent = 'Kopiert ✓'; } catch (e) { btn.textContent = 'Bitte markieren'; }
+    try { await navigator.clipboard.writeText(text); btn.textContent = t('copied'); } catch (e) { btn.textContent = t('selectManually'); }
     setTimeout(() => { btn.textContent = old; }, 1500);
   }
   document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => { const el = $(b.dataset.copy); copy(el.value !== undefined ? el.value.trim() : el.textContent, b); }));
@@ -429,22 +465,19 @@
     const typedId = $('clientId').value.trim().toLowerCase();
     const idWarn = $('idWarn');
     idWarn.hidden = !haveId || typedId.length < 8 || typedId.startsWith(haveId.toLowerCase());
-    if (!idWarn.hidden) {
-      idWarn.textContent = 'Das ist eine andere Client ID als die auf deiner Uhr (' + haveId + '…). Hast du zwei Apps bei developer.tesla.com? ' +
-        'Die Redirect URI aus Teil 2/3 muss in der App stehen, deren Client ID du hier einträgst.';
-    }
+    if (!idWarn.hidden) idWarn.textContent = t('otherId', { id: haveId });
     const warn = $('sendWarn');
     warn.hidden = send.disabled || st.online || !user();
     if (!warn.hidden) {
-      warn.textContent = domain() !== user() + '.github.io'
-        ? 'Der Schlüssel deiner Uhr ist unter ' + domain() + ' nicht abrufbar. Sonst lehnt Tesla die Registrierung ab.'
-        : 'Teil 1/3 ist noch offen: ' + (
-        st.key === 'other' ? 'Unter ' + domain() + ' liegt der Schlüssel eines anderen Geräts. Oben auf „Alten Key ersetzen“ tippen.'
-        : !st.repo ? 'Das Repository ' + domain() + ' gibt es noch nicht.'
-        : !st.nojekyll ? 'Die Datei .nojekyll fehlt, ohne sie versteckt GitHub den Schlüssel.'
-        : !st.key ? 'Der Schlüssel deiner Uhr liegt noch nicht im Repository.'
-        : 'Der Schlüssel ist noch nicht unter ' + domain() + ' abrufbar (GitHub braucht 1 bis 2 Minuten).'
-      ) + ' Sonst lehnt Tesla die Registrierung ab.';
+      const dom = domain();
+      warn.textContent = dom !== user() + '.github.io'
+        ? t('warnDomain', { dom })
+        : t('warnPart1', { why:
+          st.key === 'other' ? t('whyOther', { dom })
+          : !st.repo ? t('whyRepo', { dom })
+          : !st.nojekyll ? t('whyNoJekyll')
+          : !st.key ? t('whyKey')
+          : t('whyOnline', { dom }) });
     }
   }
   fields.forEach(f => f.addEventListener('input', validate));
@@ -478,17 +511,18 @@
   let tz = '';
   try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
   region.value = store.get('region') || (/^(Asia\/(Shanghai|Chongqing|Harbin|Urumqi))$/.test(tz) ? 'cn' : /^(America|Pacific\/Honolulu|US|Canada)/.test(tz) ? 'na' : 'eu');
-  render();
-  check(true);
 
   // The watch takes one answer per opening of this page. Once it has one (or stopped waiting), a second send ends
   // on Google's page with a dead ALLOW button. The page cannot tell whether the first send arrived.
   function showSent() {
     const sent = !!state && store.get('sent') === state;
     $('sentWarn').hidden = !sent;
-    send.textContent = sent ? 'Trotzdem nochmal senden' : 'An die Uhr senden';
+    send.textContent = t(sent ? 'sendAgain' : 'send');
   }
-  showSent();
+  function refreshAll() { applyLang(); showSent(); render(); }
+  $('lang').addEventListener('change', () => { lang = $('lang').value; try { sessionStorage.setItem('tw.lang', lang); } catch (e) {} refreshAll(); });
+  refreshAll();
+  check(true);
   // "Back" restores the page without running this script again.
   window.addEventListener('pageshow', e => {
     if (e.persisted) { $('clientSecret').value = ''; validate(); }
